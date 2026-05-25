@@ -1,1 +1,1534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The New World - Milkathon Map</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
+    :root {
+      --bg: #020408;
+      --panel: rgba(8, 8, 18, 0.88);
+      --line: rgba(127, 119, 221, 0.28);
+      --line-strong: rgba(127, 119, 221, 0.5);
+      --text: #eeeaf6;
+      --muted: rgba(255, 255, 255, 0.58);
+      --faint: rgba(255, 255, 255, 0.34);
+      --purple: #7f77dd;
+      --purple-soft: #a89ff5;
+      --red: #e24b4a;
+      --amber: #ef9f27;
+      --teal: #1d9e75;
+      --blue: #378add;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background:
+        radial-gradient(circle at 50% 18%, rgba(127, 119, 221, 0.16), transparent 34%),
+        radial-gradient(circle at 20% 75%, rgba(55, 138, 221, 0.12), transparent 28%),
+        radial-gradient(circle at 80% 72%, rgba(226, 75, 74, 0.10), transparent 26%),
+        #020408;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      opacity: 0.36;
+      background-image:
+        radial-gradient(circle, rgba(255, 255, 255, 0.8) 0 1px, transparent 1.5px),
+        radial-gradient(circle, rgba(127, 119, 221, 0.8) 0 1px, transparent 1.5px);
+      background-position: 0 0, 70px 120px;
+      background-size: 180px 180px, 260px 260px;
+    }
+
+    #three-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      cursor: grab;
+    }
+
+    #ui {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      pointer-events: none;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 18px 32px 0;
+      pointer-events: auto;
+    }
+
+    .logo {
+      min-width: 0;
+      color: #fff;
+      font-size: 21px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      line-height: 1.2;
+      text-shadow: 0 0 30px rgba(127, 119, 221, 0.85);
+    }
+
+    .logo span {
+      color: var(--purple-soft);
+    }
+
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      justify-content: flex-end;
+      padding: 4px;
+      border: 1px solid rgba(127, 119, 221, 0.25);
+      border-radius: 10px;
+      background: rgba(10, 10, 20, 0.72);
+      backdrop-filter: blur(10px);
+    }
+
+    .tab {
+      border: 0;
+      border-radius: 7px;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.58);
+      cursor: pointer;
+      font: inherit;
+      font-size: 13px;
+      letter-spacing: 0.02em;
+      padding: 8px 16px;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+
+    .tab:hover {
+      background: rgba(127, 119, 221, 0.16);
+      color: #fff;
+    }
+
+    .tab.active {
+      background: rgba(127, 119, 221, 0.30);
+      box-shadow: inset 0 0 0 1px rgba(127, 119, 221, 0.5);
+      color: #fff;
+    }
+
+    #panel-wrap {
+      flex: 1;
+      display: flex;
+      align-items: flex-end;
+      padding: 0 0 24px 32px;
+      pointer-events: none;
+    }
+
+    #panel {
+      display: flex;
+      flex-direction: column;
+      width: min(344px, calc(100vw - 32px));
+      max-height: calc(100vh - 132px);
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--panel);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 20px 70px rgba(0, 0, 0, 0.45);
+      pointer-events: auto;
+    }
+
+    #panel-header {
+      flex-shrink: 0;
+      padding: 16px 18px 12px;
+      border-bottom: 1px solid rgba(127, 119, 221, 0.15);
+    }
+
+    #panel-title {
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    #panel-sub {
+      margin-top: 2px;
+      color: rgba(255, 255, 255, 0.42);
+      font-size: 11px;
+    }
+
+    #panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 18px 16px;
+    }
+
+    #panel-body::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    #panel-body::-webkit-scrollbar-thumb {
+      border-radius: 3px;
+      background: rgba(127, 119, 221, 0.45);
+    }
+
+    .content-section {
+      display: none;
+    }
+
+    .content-section.active {
+      display: block;
+    }
+
+    .section-title {
+      margin-bottom: 10px;
+      padding-bottom: 7px;
+      border-bottom: 1px solid rgba(127, 119, 221, 0.15);
+      color: var(--purple-soft);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .warning-bar {
+      margin-bottom: 10px;
+      padding: 9px 11px;
+      border: 1px solid rgba(226, 75, 74, 0.35);
+      border-radius: 7px;
+      background: rgba(226, 75, 74, 0.10);
+      color: #f08080;
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    .loc-card,
+    .faction-card {
+      margin-bottom: 8px;
+      border-radius: 9px;
+      padding: 11px 13px;
+    }
+
+    .loc-card {
+      border: 1px solid rgba(127, 119, 221, 0.20);
+      background: rgba(127, 119, 221, 0.08);
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, transform 0.15s;
+    }
+
+    .loc-card:hover,
+    .loc-card.active {
+      border-color: var(--line-strong);
+      background: rgba(127, 119, 221, 0.18);
+      transform: translateY(-1px);
+    }
+
+    .loc-card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .loc-dot {
+      width: 8px;
+      height: 8px;
+      flex-shrink: 0;
+      border-radius: 999px;
+    }
+
+    .loc-name,
+    .faction-name {
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .loc-desc,
+    .faction-desc,
+    .lore-text,
+    .t-desc,
+    .detail-text {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.55;
+    }
+
+    .tag {
+      display: inline-block;
+      margin-top: 6px;
+      margin-right: 3px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 10px;
+    }
+
+    .tag-purple {
+      border: 1px solid rgba(127, 119, 221, 0.35);
+      background: rgba(127, 119, 221, 0.20);
+      color: var(--purple-soft);
+    }
+
+    .tag-red {
+      border: 1px solid rgba(226, 75, 74, 0.35);
+      background: rgba(226, 75, 74, 0.20);
+      color: #f08080;
+    }
+
+    .tag-amber {
+      border: 1px solid rgba(239, 159, 39, 0.35);
+      background: rgba(239, 159, 39, 0.20);
+      color: #f5c075;
+    }
+
+    .tag-gray {
+      border: 1px solid rgba(136, 135, 128, 0.35);
+      background: rgba(136, 135, 128, 0.20);
+      color: #aaa;
+    }
+
+    .detail-back {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-bottom: 12px;
+      border: 0;
+      background: transparent;
+      color: var(--faint);
+      cursor: pointer;
+      font: inherit;
+      font-size: 11px;
+      padding: 0;
+    }
+
+    .detail-back:hover {
+      color: #fff;
+    }
+
+    .detail-section {
+      margin-bottom: 12px;
+    }
+
+    .detail-label {
+      margin-bottom: 5px;
+      color: rgba(168, 159, 245, 0.88);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .cmd-pill {
+      display: inline-block;
+      margin: 2px;
+      padding: 3px 8px;
+      border: 1px solid rgba(127, 119, 221, 0.30);
+      border-radius: 5px;
+      background: rgba(127, 119, 221, 0.15);
+      color: var(--purple-soft);
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 11px;
+    }
+
+    .faction-card {
+      border: 1px solid;
+    }
+
+    .faction-name {
+      margin-bottom: 4px;
+    }
+
+    .faction-desc {
+      margin-bottom: 6px;
+    }
+
+    .timeline-item {
+      position: relative;
+      margin-left: 5px;
+      margin-bottom: 2px;
+      padding: 9px 0 9px 16px;
+      border-left: 2px solid rgba(127, 119, 221, 0.25);
+    }
+
+    .timeline-item::before {
+      content: "";
+      position: absolute;
+      top: 14px;
+      left: -5px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--purple);
+    }
+
+    .timeline-mx {
+      border-left-color: rgba(226, 75, 74, 0.45);
+    }
+
+    .timeline-mx::before {
+      background: var(--red);
+    }
+
+    .t-label {
+      margin-bottom: 2px;
+      color: var(--purple-soft);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+
+    .t-event {
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .lore-block {
+      margin-bottom: 10px;
+      padding: 10px 12px;
+      border-left: 2px solid rgba(127, 119, 221, 0.44);
+      border-radius: 0 7px 7px 0;
+      background: rgba(127, 119, 221, 0.08);
+    }
+
+    .lore-title {
+      margin-bottom: 4px;
+      color: var(--purple-soft);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .cmd-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 7px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .cmd-row:last-child {
+      border-bottom: 0;
+    }
+
+    .cmd-name {
+      color: var(--purple-soft);
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .cmd-info {
+      max-width: 170px;
+      color: rgba(255, 255, 255, 0.48);
+      font-size: 11px;
+      line-height: 1.35;
+      text-align: right;
+    }
+
+    .command-card {
+      --group-color: var(--purple-soft);
+      border-left-color: color-mix(in srgb, var(--group-color), transparent 45%);
+      background: rgba(127, 119, 221, 0.07);
+    }
+
+    .command-card .lore-title {
+      color: var(--group-color);
+    }
+
+    .command-list {
+      display: grid;
+      gap: 5px;
+    }
+
+    .command-bullet {
+      display: grid;
+      grid-template-columns: minmax(86px, max-content) 1fr;
+      gap: 8px;
+      align-items: baseline;
+      min-height: 22px;
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .command-bullet:last-child {
+      border-bottom: 0;
+    }
+
+    .command-bullet .cmd-name {
+      color: var(--group-color);
+    }
+
+    .command-desc {
+      color: rgba(255, 255, 255, 0.42);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    #tooltip {
+      position: fixed;
+      z-index: 20;
+      display: none;
+      max-width: 210px;
+      border: 1px solid rgba(127, 119, 221, 0.40);
+      border-radius: 7px;
+      background: rgba(8, 8, 18, 0.94);
+      backdrop-filter: blur(8px);
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.4;
+      padding: 7px 11px;
+      pointer-events: none;
+    }
+
+    #instructions {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      z-index: 10;
+      color: rgba(255, 255, 255, 0.35);
+      font-size: 11px;
+      line-height: 1.7;
+      pointer-events: none;
+      text-align: right;
+    }
+
+    @media (max-width: 760px) {
+      body {
+        overflow: auto;
+      }
+
+      #ui {
+        position: relative;
+        min-height: 100vh;
+      }
+
+      #three-canvas {
+        height: 52vh;
+      }
+
+      header {
+        align-items: stretch;
+        flex-direction: column;
+        padding: 14px 14px 0;
+      }
+
+      .logo {
+        font-size: 16px;
+      }
+
+      nav {
+        justify-content: flex-start;
+      }
+
+      .tab {
+        flex: 1 1 auto;
+        padding: 8px 10px;
+      }
+
+      #panel-wrap {
+        align-items: flex-end;
+        padding: 42vh 14px 18px;
+      }
+
+      #panel {
+        width: 100%;
+        max-height: none;
+      }
+
+      #instructions {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="three-canvas"></canvas>
+  <div id="tooltip"></div>
+  <div id="instructions">Drag to rotate &middot; Scroll to zoom<br />Click a marker to explore</div>
+  <div id="ui">
+    <header>
+      <div class="logo">THE NEW WORLD</div>
+      <nav aria-label="Map sections">
+        <button class="tab active" type="button" data-tab="world">World</button>
+        <button class="tab" type="button" data-tab="timeline">Timeline</button>
+        <button class="tab" type="button" data-tab="places">Places</button>
+        <button class="tab" type="button" data-tab="characters">Characters</button>
+        <button class="tab" type="button" data-tab="commands">Commands</button>
+      </nav>
+    </header>
+    <div id="panel-wrap">
+      <div id="panel">
+        <div id="panel-header">
+          <div id="panel-title">New World Map</div>
+          <div id="panel-sub">Click a marker to explore</div>
+        </div>
+        <div id="panel-body">
+          <section class="content-section active" id="tab-world">
+            <div class="section-title">Locations</div>
+            <div id="loc-list"></div>
+            <div id="loc-detail" hidden></div>
+          </section>
+
+          <section class="content-section" id="tab-timeline">
+            <div class="section-title">Milkathon History</div>
+            <div id="timeline-list"></div>
+          </section>
+
+          <section class="content-section" id="tab-places">
+            <div class="section-title">Places</div>
+            <div id="places-list"></div>
+          </section>
+
+          <section class="content-section" id="tab-characters">
+            <div class="section-title">Characters</div>
+            <div id="characters-list"></div>
+          </section>
+
+          <section class="content-section" id="tab-commands">
+            <div class="section-title">Commands & Factions</div>
+            <div id="cmd-list"></div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const locations = [
+      {
+        id: "city",
+        label: "The City",
+        lat: 4,
+        lng: -6,
+        color: "#7F77DD",
+        status: "Active",
+        desc: "Central hub of the New World and the main city carried over from the Old World.",
+        lore: "The city survived the collapse into the New World. It sits near the heart of the main continent and remains the centre of citizen life, rebuilding, gambling, faction chaos, and whatever new disaster chat causes next."
+      },
+      {
+        id: "lab",
+        label: "Cow's Secret Lab",
+        lat: -43,
+        lng: 17,
+        color: "#E24B4A",
+        status: "Abandoned",
+        desc: "Hidden research facility at the southern end of the main landmass.",
+        lore: "Discovered during The New World Quest. Cow Von Braun ran Milker experiments here, Heim was found trapped inside, and the Sentient Milker Queen was revealed through the final terminal log."
+      },
+      {
+        id: "ocean",
+        label: "The Deep",
+        lat: -18,
+        lng: 104,
+        color: "#378ADD",
+        status: "Under investigation",
+        desc: "Unexplored ocean region far from the main continent.",
+        lore: "The Deep contains massive underwater ravines and underground systems. Current disturbances point toward the Contingency Protocol System beneath the seas."
+      },
+      {
+        id: "portal",
+        label: "The Sky Portal",
+        lat: 0,
+        lng: 0,
+        color: "#D4A017",
+        status: "Dormant",
+        desc: "The massive spiral portal hanging above the New World.",
+        lore: "The portal connects places, realities, and timelines to the New World. Only the Sentient Milker Queen could fully control it, so travelling through it now is unpredictable.",
+        sky: true
+      },
+      {
+        id: "heim-city",
+        label: "Heimidingers City",
+        lat: 2,
+        lng: -31,
+        color: "#1D9E75",
+        status: "Allied",
+        desc: "Heimidinger's city, just west of the main citizen city.",
+        lore: "After surviving the lab and the demon invasion, Heim made a home in the New World and became the leader of a powerful clan. His city sometimes sends troops to defend the main city."
+      }
+    ];
+
+    const timeline = [
+      { label: "M1", event: "October 2024", desc: "The Chair used the first Milkathon to gain power through Milkers, then gave it up after chat confronted him." },
+      { label: "M2", event: "Christmas Milkathon 1", desc: "Chat split into factions and raced to 2.1BL Milkers. Shrimp launched the rocket to search for the New World." },
+      { label: "M3", event: "The New World Quest", desc: "The noir investigation exposed Cow's Secret Lab, the Sentient Milker Queen, and collapsed the Old World into the New World." },
+      { label: "M4", event: "Doom Marathon", desc: "Locals opened Hell portals to stop the citizens destroying the New World. Chat built Mukes and reset the Milker system." },
+      { label: "M5", event: "Birthday Milkathon", desc: "Citizens and locals worked together to restore the New World and fight the monstrosities threatening the cities." },
+      { label: "M6", event: "October Milkathon", desc: "Church of Divina Lacta battled the Cult of Milkthulu. The Cult won, summoned Milkthulu, and all Milkers were boiled." },
+      { label: "M7", event: "Christmas Milkathon 2: Milkthulu Save Christmas", desc: "Chat built Milkthulu's sleigh and found the reindeer so he could defeat the Grinch in his throne world." },
+      { label: "M8", event: "COWS Carnival", desc: "A festival for the New World. The 1 Quintillion Milker cap was hit multiple times, setting up what comes next." },
+      { label: "M9", event: "Subnautica - Still Ongoing", desc: "Disturbances beneath the seas point toward the Contingency Protocol System hidden in the depths.", mx: true }
+    ];
+
+    const places = [
+      { name: "Old World", desc: "The original command world, essentially Earth. The city chat built was pulled into the New World and survived the collapse, at least for now." },
+      { name: "New World", desc: "A world created by the Sentient Milker Queen, made by and of Milkers. Everything since M3 has happened here." },
+      { name: "The Portal", desc: "A huge portal above the New World connecting places, realities, and timelines. Only the Milker Queen could fully control it." },
+      { name: "Grinches Throne World", desc: "The home of the Grinch's soul. Milkthulu travelled there through the portal to defeat him properly, but never returned." },
+      { name: "The Deep", desc: "Unexplored underwater regions of the New World, filled with massive ravines and underground systems." }
+    ];
+
+    const characters = [
+      { name: "Cow", desc: "The streamer, same person in real life and in the New World." },
+      { name: "Chair", desc: "TTS Biden voice. An ancient deity once bound into chair form by heaven and hell. Powerless now, but still the force's most prominent detective." },
+      { name: "Cow Von Braun", desc: "Lead scientist of all Milker-related science. Just don't ask what he was doing in the 40s." },
+      { name: "Sentient Milker Queen", desc: "A divine hive mind born from an incomprehensible number of compressed Milkers. Defeated by the Chair and chat, triggering the end of the Old World." },
+      { name: "Milkthulu", desc: "Ancient eldritch deity trapped at the core of the New World, released by the Cult. Saved Christmas, but is stranded in the Grinch's Throne World." },
+      { name: "Citizens", desc: "Anyone who has ever chatted. Every chatter is registered as a citizen." },
+      { name: "Locals", desc: "Life that inhabited the New World before chat arrived. Some believe they were barely sentient army fodder grown by the Milker Queen." },
+      { name: "Heim", desc: "Pulled here during Milker portal experiments and trapped in Cow's Secret Lab. He later survived the demon invasion and became leader of a powerful clan." },
+      { name: "Mundo", desc: "Escaped the lab and built an underground information network. He led the Chair to Cow's Secret Lab and still appears when he wants to." }
+    ];
+
+    const commandGroups = [
+      {
+        title: "How To Join",
+        color: "#A89FF5",
+        note: "Use !FactionName to join a faction. Replace FactionName with the faction you want. Switching factions costs 10K Milkers and has a 30 minute delay. Keep an eye on chat for pop-up commands like !chop or !mine.",
+        commands: []
+      },
+      {
+        title: "Citizens",
+        color: "#A8A8A8",
+        commands: ["!Daily", "!shoot", "!fish", "!gamble", "!Slots", "!Roulette", "!Plinko", "!explore", "!invest", "!work", "!safehouse", "!business", "!duel", "!leaderboards", "!milkers"]
+      },
+      {
+        title: "Mafia",
+        color: "#E24B4A",
+        note: "!business acts different for Mafia members.",
+        commands: ["!bounty", "!assassinate", "!import", "!export", "!sell", "!hideout"]
+      },
+      {
+        title: "Cops",
+        color: "#378ADD",
+        commands: ["!arrest", "!patrol", "!raid", "!airsupport", "!stakeout"]
+      },
+      {
+        title: "Rebels",
+        color: "#639922",
+        commands: ["!anarchy", "Sub only mode", "Emote only mode"]
+      },
+      {
+        title: "Cult",
+        color: "#D85A30",
+        commands: ["!boil", "!chant", "!convert", "!hellblast", "!pillage", "!summon", "!sacrifice", "!ritual"]
+      },
+      {
+        title: "Church",
+        color: "#62C7F4",
+        commands: ["!convert", "!pray", "!smite", "!bless", "!enchant", "!crusade"]
+      },
+      {
+        title: "Weapons",
+        color: "#A89FF5",
+        commands: ["!gambaGun", "!LoveGun", "!Hellbringer", "!WARHOG", "!EMP", "!VowelProweler"]
+      }
+    ];
+
+    const tabTitles = {
+      world: ["New World Map", "Click a marker to explore"],
+      timeline: ["Milkathon Timeline", "M1 through M9, still ongoing"],
+      places: ["Places", "Worlds, portals, and depths"],
+      characters: ["Characters", "Key people and beings"],
+      commands: ["Commands", "Faction and citizen commands"]
+    };
+
+    let currentTab = "world";
+    let selectedLoc = null;
+    let globe;
+    let markerGroup;
+    let targetRotX = 0.1;
+    let targetRotY = 0;
+    let autoRotate = true;
+
+    const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      "\"": "&quot;",
+      "'": "&#39;"
+    })[char]);
+
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll(".tab").forEach((button) => {
+        button.classList.toggle("active", button.dataset.tab === tab);
+      });
+      document.querySelectorAll(".content-section").forEach((section) => {
+        section.classList.remove("active");
+      });
+      document.getElementById(`tab-${tab}`).classList.add("active");
+      document.getElementById("panel-title").textContent = tabTitles[tab][0];
+      document.getElementById("panel-sub").textContent = tabTitles[tab][1];
+      if (tab === "world") renderLocList();
+      if (tab === "timeline") renderTimeline();
+      if (tab === "places") renderPlaces();
+      if (tab === "characters") renderCharacters();
+      if (tab === "commands") renderCommands();
+    }
+
+    function renderLocList() {
+      const list = document.getElementById("loc-list");
+      const detail = document.getElementById("loc-detail");
+      list.hidden = false;
+      detail.hidden = true;
+      list.innerHTML = locations.map((loc) => `
+        <article class="loc-card ${selectedLoc === loc.id ? "active" : ""}" data-location="${escapeHtml(loc.id)}">
+          <div class="loc-card-header">
+            <div class="loc-dot" style="background:${loc.color}"></div>
+            <div class="loc-name">${escapeHtml(loc.label)}</div>
+          </div>
+          <div class="loc-desc">${escapeHtml(loc.desc)}</div>
+          ${loc.status === "ACTIVE THREAT" ? '<span class="tag tag-red">Active threat</span>' : ""}
+          ${loc.status === "Under investigation" ? '<span class="tag tag-amber">Investigating</span>' : ""}
+        </article>
+      `).join("");
+    }
+
+    function showLocDetail(id) {
+      selectedLoc = id;
+      const loc = locations.find((item) => item.id === id);
+      const list = document.getElementById("loc-list");
+      const detail = document.getElementById("loc-detail");
+      list.hidden = true;
+      detail.hidden = false;
+      detail.innerHTML = `
+        <button class="detail-back" type="button" id="back-to-locations">&larr; Back to locations</button>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+          <div style="width:12px;height:12px;border-radius:50%;background:${loc.color};flex-shrink:0"></div>
+          <div style="font-size:15px;font-weight:800;color:#fff">${escapeHtml(loc.label)}</div>
+        </div>
+        ${loc.status === "ACTIVE THREAT" ? '<div class="warning-bar">CONTINGENCY ACTIVE - threat level critical</div>' : ""}
+        <div class="detail-section">
+          <div class="detail-label">Overview</div>
+          <div class="detail-text">${escapeHtml(loc.desc)}</div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-label">Lore</div>
+          <div class="detail-text">${escapeHtml(loc.lore)}</div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-label">Status</div>
+          <div class="detail-text" style="color:${loc.color}">${escapeHtml(loc.status)}</div>
+        </div>
+      `;
+      focusLocation(loc);
+    }
+
+    function renderPlaces() {
+      document.getElementById("places-list").innerHTML = places.map((place) => `
+        <article class="lore-block">
+          <div class="lore-title">${escapeHtml(place.name)}</div>
+          <div class="lore-text">${escapeHtml(place.desc)}</div>
+        </article>
+      `).join("");
+    }
+
+    function renderCharacters() {
+      document.getElementById("characters-list").innerHTML = characters.map((character) => `
+        <article class="lore-block">
+          <div class="lore-title">${escapeHtml(character.name)}</div>
+          <div class="lore-text">${escapeHtml(character.desc)}</div>
+        </article>
+      `).join("");
+    }
+
+    function renderTimeline() {
+      document.getElementById("timeline-list").innerHTML = timeline.map((item) => `
+        <div class="timeline-item ${item.mx ? "timeline-mx" : ""}">
+          <div class="t-label">${escapeHtml(item.label)}</div>
+          <div class="t-event" style="${item.mx ? "color:#f08080" : ""}">${escapeHtml(item.event)}</div>
+          <div class="t-desc">${escapeHtml(item.desc)}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderCommands() {
+      document.getElementById("cmd-list").innerHTML = commandGroups.map((group) => `
+        <article class="lore-block command-card" style="--group-color:${escapeHtml(group.color)}">
+          <div class="lore-title">${escapeHtml(group.title)}</div>
+          ${group.note ? `<div class="lore-text" style="margin-bottom:${group.commands.length ? "8px" : "0"}">${escapeHtml(group.note)}</div>` : ""}
+          ${group.commands.length ? `<div class="command-list">${group.commands.map((command) => `
+            <div class="command-bullet">
+              <span class="cmd-name">${escapeHtml(command)}</span>
+              <span class="command-desc">- </span>
+            </div>
+          `).join("")}</div>` : ""}
+        </article>
+      `).join("");
+    }
+
+    function makeWorldTexture() {
+      const textureCanvas = document.createElement("canvas");
+      textureCanvas.width = 2048;
+      textureCanvas.height = 1024;
+      const ctx = textureCanvas.getContext("2d");
+      const rand = (() => {
+        let seed = 1337;
+        return () => {
+          seed = (seed * 1664525 + 1013904223) >>> 0;
+          return seed / 4294967296;
+        };
+      })();
+
+      const ocean = ctx.createLinearGradient(0, 0, 0, textureCanvas.height);
+      ocean.addColorStop(0, "#17345e");
+      ocean.addColorStop(0.45, "#0d3152");
+      ocean.addColorStop(0.72, "#0b2441");
+      ocean.addColorStop(1, "#061324");
+      ctx.fillStyle = ocean;
+      ctx.fillRect(0, 0, textureCanvas.width, textureCanvas.height);
+
+      const drawShape = (points, fill, stroke = "rgba(221, 202, 132, 0.26)", lineWidth = 9) => {
+        ctx.beginPath();
+        points.forEach(([x, y], pointIndex) => {
+          if (pointIndex === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.closePath();
+        ctx.fillStyle = fill;
+        ctx.fill();
+        ctx.strokeStyle = stroke;
+        ctx.lineWidth = lineWidth;
+        ctx.stroke();
+      };
+
+      const drawIsland = (x, y, radiusX, radiusY, fill) => {
+        const points = [];
+        for (let i = 0; i < 18; i += 1) {
+          const angle = (i / 18) * Math.PI * 2;
+          const wobble = 0.72 + rand() * 0.48;
+          points.push([
+            x + Math.cos(angle) * radiusX * wobble,
+            y + Math.sin(angle) * radiusY * wobble
+          ]);
+        }
+        drawShape(points, fill, "rgba(221, 202, 132, 0.20)", 4);
+      };
+
+      const mainContinent = [
+        [720, 115], [915, 82], [1125, 126], [1290, 235], [1385, 388],
+        [1360, 540], [1455, 675], [1390, 850], [1225, 930], [1010, 900],
+        [855, 792], [785, 635], [625, 540], [570, 392], [625, 250]
+      ];
+      drawShape(mainContinent, "#5d7839");
+
+      const mainSouth = [
+        [895, 535], [1060, 560], [1215, 635], [1280, 778],
+        [1198, 878], [1040, 850], [928, 742], [840, 630]
+      ];
+      drawShape(mainSouth, "rgba(91, 95, 45, 0.72)", "rgba(221, 202, 132, 0.12)", 4);
+
+      const northernHighlands = [
+        [735, 142], [915, 102], [1115, 145], [1235, 250],
+        [1190, 318], [1010, 282], [840, 312], [688, 246]
+      ];
+      drawShape(northernHighlands, "rgba(90, 106, 68, 0.92)", "rgba(255, 255, 255, 0.10)", 4);
+
+      const equatorialForest = [
+        [590, 382], [765, 320], [990, 345], [1260, 420],
+        [1362, 535], [1205, 610], [970, 600], [742, 555], [610, 490]
+      ];
+      drawShape(equatorialForest, "rgba(31, 101, 55, 0.76)", "rgba(42, 160, 100, 0.10)", 4);
+
+      const southernDrylands = [
+        [825, 650], [1010, 610], [1200, 700], [1248, 828],
+        [1112, 870], [955, 815], [842, 742]
+      ];
+      drawShape(southernDrylands, "rgba(142, 112, 45, 0.70)", "rgba(239, 159, 39, 0.12)", 4);
+
+      const iceNorth = [
+        [0, 0], [2048, 0], [2048, 74], [1810, 54], [1580, 86], [1340, 56],
+        [1090, 92], [850, 55], [610, 82], [360, 52], [170, 78], [0, 58]
+      ];
+      drawShape(iceNorth, "rgba(238, 248, 255, 0.93)", "rgba(170, 220, 255, 0.38)", 5);
+
+      const iceSouth = [
+        [0, 944], [145, 910], [320, 932], [520, 885], [760, 928], [960, 872],
+        [1210, 906], [1420, 860], [1655, 915], [1860, 875], [2048, 918],
+        [2048, 1024], [0, 1024]
+      ];
+      drawShape(iceSouth, "rgba(238, 248, 255, 0.96)", "rgba(170, 220, 255, 0.42)", 6);
+
+      drawIsland(168, 140, 46, 22, "rgba(236, 248, 255, 0.88)");
+      drawIsland(292, 94, 34, 18, "rgba(236, 248, 255, 0.84)");
+      drawIsland(1760, 112, 56, 20, "rgba(236, 248, 255, 0.82)");
+      drawIsland(1508, 952, 118, 42, "rgba(238, 248, 255, 0.94)");
+      drawIsland(1740, 932, 92, 34, "rgba(238, 248, 255, 0.92)");
+      drawIsland(1310, 966, 68, 24, "rgba(238, 248, 255, 0.92)");
+
+      const islandChains = [
+        [330, 345, 55, 30], [430, 405, 38, 22], [505, 485, 32, 20],
+        [1515, 360, 70, 42], [1620, 430, 48, 28], [1710, 515, 35, 24],
+        [430, 720, 68, 38], [540, 790, 44, 24], [1560, 725, 82, 46],
+        [1698, 800, 48, 30], [1820, 685, 36, 24]
+      ];
+      islandChains.forEach(([x, y, rx, ry], index) => {
+        drawIsland(x, y, rx, ry, index % 3 === 0 ? "#52723a" : "#64783b");
+      });
+
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      ctx.strokeStyle = "rgba(255, 190, 84, 0.26)";
+      ctx.lineWidth = 3;
+      for (let i = 0; i < 34; i += 1) {
+        const x = 720 + rand() * 650;
+        const y = 175 + rand() * 650;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + 18 + rand() * 54, y + 4 + rand() * 22);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      for (let i = 0; i < 180; i += 1) {
+        const x = 615 + rand() * 820;
+        const y = 145 + rand() * 735;
+        const glow = rand() * 0.7 + 0.2;
+        ctx.fillStyle = `rgba(255, 184, 78, ${0.12 * glow})`;
+        ctx.beginPath();
+        ctx.arc(x, y, rand() * 2 + 0.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+
+      for (let i = 0; i < 1100; i += 1) {
+        const x = rand() * textureCanvas.width;
+        const y = rand() * textureCanvas.height;
+        const radius = rand() * 1.8 + 0.4;
+        ctx.fillStyle = rand() > 0.55 ? "rgba(255,255,255,0.10)" : "rgba(127,119,221,0.16)";
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.globalAlpha = 0.45;
+      ctx.strokeStyle = "rgba(255,255,255,0.08)";
+      ctx.lineWidth = 2;
+      for (let x = 0; x <= textureCanvas.width; x += 128) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, textureCanvas.height);
+        ctx.stroke();
+      }
+      for (let y = 0; y <= textureCanvas.height; y += 128) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(textureCanvas.width, y);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+
+      return new THREE.CanvasTexture(textureCanvas);
+    }
+
+    function makeCloudTexture() {
+      const cloudCanvas = document.createElement("canvas");
+      cloudCanvas.width = 2048;
+      cloudCanvas.height = 1024;
+      const ctx = cloudCanvas.getContext("2d");
+      const rand = (() => {
+        let seed = 4104;
+        return () => {
+          seed = (seed * 1664525 + 1013904223) >>> 0;
+          return seed / 4294967296;
+        };
+      })();
+
+      ctx.clearRect(0, 0, cloudCanvas.width, cloudCanvas.height);
+      ctx.globalCompositeOperation = "screen";
+
+      for (let band = 0; band < 9; band += 1) {
+        const yBase = 150 + rand() * 720;
+        const thickness = 26 + rand() * 58;
+        const drift = rand() * 240;
+        for (let i = 0; i < 120; i += 1) {
+          const x = ((i * 24 + drift + rand() * 70) % cloudCanvas.width);
+          const y = yBase + Math.sin((i + band) * 0.38) * thickness + (rand() - 0.5) * thickness;
+          const rx = 34 + rand() * 86;
+          const ry = 8 + rand() * 24;
+          const alpha = 0.018 + rand() * 0.05;
+          const gradient = ctx.createRadialGradient(x, y, 0, x, y, rx);
+          gradient.addColorStop(0, `rgba(255,255,255,${alpha})`);
+          gradient.addColorStop(0.65, `rgba(255,255,255,${alpha * 0.45})`);
+          gradient.addColorStop(1, "rgba(255,255,255,0)");
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.ellipse(x, y, rx, ry, rand() * Math.PI, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      for (let i = 0; i < 260; i += 1) {
+        const x = rand() * cloudCanvas.width;
+        const y = rand() * cloudCanvas.height;
+        const r = 3 + rand() * 11;
+        ctx.fillStyle = `rgba(255,255,255,${0.012 + rand() * 0.028})`;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      const texture = new THREE.CanvasTexture(cloudCanvas);
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.ClampToEdgeWrapping;
+      return texture;
+    }
+
+    function makeLightsTexture() {
+      const lightsCanvas = document.createElement("canvas");
+      lightsCanvas.width = 2048;
+      lightsCanvas.height = 1024;
+      const ctx = lightsCanvas.getContext("2d");
+      const rand = (() => {
+        let seed = 90210;
+        return () => {
+          seed = (seed * 1664525 + 1013904223) >>> 0;
+          return seed / 4294967296;
+        };
+      })();
+
+      ctx.clearRect(0, 0, lightsCanvas.width, lightsCanvas.height);
+      ctx.globalCompositeOperation = "lighter";
+
+      const cityClusters = [
+        [1010, 430, 120, 70, 160],
+        [1125, 575, 95, 60, 90],
+        [880, 525, 115, 58, 120],
+        [1210, 750, 80, 50, 70],
+        [760, 360, 70, 42, 55]
+      ];
+
+      cityClusters.forEach(([cx, cy, rx, ry, count]) => {
+        for (let i = 0; i < count; i += 1) {
+          const angle = rand() * Math.PI * 2;
+          const radius = Math.sqrt(rand());
+          const x = cx + Math.cos(angle) * rx * radius;
+          const y = cy + Math.sin(angle) * ry * radius;
+          const glow = 0.35 + rand() * 0.65;
+          ctx.fillStyle = `rgba(255, 174, 78, ${0.18 * glow})`;
+          ctx.beginPath();
+          ctx.arc(x, y, 1 + rand() * 2.8, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+
+      const texture = new THREE.CanvasTexture(lightsCanvas);
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.ClampToEdgeWrapping;
+      return texture;
+    }
+
+    function makePortalTexture() {
+      const portalCanvas = document.createElement("canvas");
+      portalCanvas.width = 1024;
+      portalCanvas.height = 1024;
+      const ctx = portalCanvas.getContext("2d");
+      const cx = 512;
+      const cy = 512;
+
+      ctx.clearRect(0, 0, 1024, 1024);
+      ctx.globalCompositeOperation = "lighter";
+
+      const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, 210);
+      core.addColorStop(0, "rgba(255, 236, 170, 0.72)");
+      core.addColorStop(0.16, "rgba(255, 170, 58, 0.62)");
+      core.addColorStop(0.52, "rgba(255, 92, 33, 0.28)");
+      core.addColorStop(1, "rgba(255, 92, 33, 0)");
+      ctx.fillStyle = core;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 260, 0, Math.PI * 2);
+      ctx.fill();
+
+      const drawArm = (offset, color, width, alpha) => {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(offset);
+        ctx.strokeStyle = color;
+        ctx.globalAlpha = alpha;
+        ctx.lineWidth = width;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        for (let i = 0; i < 230; i += 1) {
+          const t = i / 229;
+          const angle = t * Math.PI * 4.85;
+          const radius = 22 + t * 410;
+          const wobble = Math.sin(t * 28 + offset * 3) * 12;
+          const x = Math.cos(angle) * (radius + wobble);
+          const y = Math.sin(angle) * (radius + wobble);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        ctx.restore();
+      };
+
+      for (let i = 0; i < 8; i += 1) {
+        drawArm((Math.PI * 2 / 8) * i, "rgba(255, 120, 30, 0.95)", 13, 0.75);
+        drawArm((Math.PI * 2 / 8) * i + 0.18, "rgba(36, 212, 227, 0.70)", 5, 0.55);
+        drawArm((Math.PI * 2 / 8) * i - 0.12, "rgba(168, 90, 255, 0.60)", 4, 0.45);
+      }
+
+      ctx.globalAlpha = 1;
+      for (let i = 0; i < 120; i += 1) {
+        const angle = Math.random() * Math.PI * 2;
+        const radius = 150 + Math.random() * 360;
+        ctx.fillStyle = Math.random() > 0.5 ? "rgba(255, 167, 63, 0.75)" : "rgba(55, 216, 235, 0.6)";
+        ctx.beginPath();
+        ctx.arc(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius, Math.random() * 2.2 + 0.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      return new THREE.CanvasTexture(portalCanvas);
+    }
+
+    function latLngToVec3(lat, lng, radius) {
+      const phi = (90 - lat) * Math.PI / 180;
+      const theta = (lng + 180) * Math.PI / 180;
+      return new THREE.Vector3(
+        -radius * Math.sin(phi) * Math.cos(theta),
+        radius * Math.cos(phi),
+        radius * Math.sin(phi) * Math.sin(theta)
+      );
+    }
+
+    function focusGlobe(lat, lng) {
+      targetRotY = -(lng + 90) * Math.PI / 180;
+      targetRotX = lat * Math.PI / 180;
+      autoRotate = false;
+    }
+
+    function focusLocation(loc) {
+      if (loc.sky) {
+        targetRotX = 0.1;
+        targetRotY = 0;
+        autoRotate = false;
+        return;
+      }
+      focusGlobe(loc.lat, loc.lng);
+    }
+
+    function initGlobe() {
+      const canvas = document.getElementById("three-canvas");
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+      camera.position.set(0, 0, 2.8);
+
+      const worldTexture = makeWorldTexture();
+      const lightsTexture = makeLightsTexture();
+      globe = new THREE.Mesh(
+        new THREE.SphereGeometry(1, 128, 128),
+        new THREE.MeshPhongMaterial({
+          map: worldTexture,
+          emissive: new THREE.Color(0xff8f3a),
+          emissiveMap: lightsTexture,
+          emissiveIntensity: 0.36,
+          specular: new THREE.Color(0x000000),
+          shininess: 0
+        })
+      );
+      scene.add(globe);
+
+      const clouds = new THREE.Mesh(
+        new THREE.SphereGeometry(1.014, 128, 128),
+        new THREE.MeshPhongMaterial({
+          map: makeCloudTexture(),
+          color: 0xffffff,
+          transparent: true,
+          opacity: 0.46,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending
+        })
+      );
+      scene.add(clouds);
+
+      const atmosphere = new THREE.Mesh(
+        new THREE.SphereGeometry(1.055, 96, 96),
+        new THREE.MeshBasicMaterial({
+          color: 0x55b8ff,
+          transparent: true,
+          opacity: 0.11,
+          side: THREE.BackSide,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false
+        })
+      );
+      scene.add(atmosphere);
+
+      const glow = new THREE.Mesh(
+        new THREE.SphereGeometry(1.095, 96, 96),
+        new THREE.MeshBasicMaterial({
+          color: 0x7f77dd,
+          transparent: true,
+          opacity: 0.045,
+          side: THREE.BackSide,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false
+        })
+      );
+      scene.add(glow);
+
+      const starGeometry = new THREE.BufferGeometry();
+      const starPositions = [];
+      const starColors = [];
+      for (let i = 0; i < 950; i += 1) {
+        const radius = 8 + Math.random() * 18;
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos((Math.random() * 2) - 1);
+        starPositions.push(
+          Math.sin(phi) * Math.cos(theta) * radius,
+          Math.cos(phi) * radius,
+          Math.sin(phi) * Math.sin(theta) * radius
+        );
+        const warm = Math.random() > 0.78;
+        starColors.push(warm ? 1 : 0.62, warm ? 0.72 : 0.82, warm ? 0.46 : 1);
+      }
+      starGeometry.setAttribute("position", new THREE.Float32BufferAttribute(starPositions, 3));
+      starGeometry.setAttribute("color", new THREE.Float32BufferAttribute(starColors, 3));
+      const stars = new THREE.Points(
+        starGeometry,
+        new THREE.PointsMaterial({
+          size: 0.026,
+          vertexColors: true,
+          transparent: true,
+          opacity: 0.74,
+          depthWrite: false
+        })
+      );
+      scene.add(stars);
+
+      const portalGroup = new THREE.Group();
+      portalGroup.position.set(0.12, 1.02, -0.62);
+      portalGroup.rotation.x = -0.48;
+      portalGroup.rotation.z = -0.16;
+      scene.add(portalGroup);
+
+      const portalTexture = makePortalTexture();
+      const portal = new THREE.Sprite(
+        new THREE.SpriteMaterial({
+          map: portalTexture,
+          color: 0xffffff,
+          transparent: true,
+          opacity: 0.92,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false
+        })
+      );
+      portal.scale.set(1.62, 1.62, 1);
+      portalGroup.add(portal);
+
+      const portalHalo = new THREE.Sprite(
+        new THREE.SpriteMaterial({
+          map: portalTexture,
+          color: 0xff8f3a,
+          transparent: true,
+          opacity: 0.08,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false
+        })
+      );
+      portalHalo.scale.set(2.28, 2.28, 1);
+      portalGroup.add(portalHalo);
+
+      scene.add(new THREE.AmbientLight(0x25314b, 0.62));
+      const sun = new THREE.DirectionalLight(0xffe4bd, 1.45);
+      sun.position.set(5, 3, 5);
+      scene.add(sun);
+      const rimLight = new THREE.DirectionalLight(0x7f77dd, 0.78);
+      rimLight.position.set(-5, -2, -3);
+      scene.add(rimLight);
+      const portalLight = new THREE.PointLight(0xff8f3a, 0.42, 3.2);
+      portalLight.position.set(0.1, 1.25, -0.25);
+      scene.add(portalLight);
+
+      markerGroup = new THREE.Group();
+      scene.add(markerGroup);
+      const markerMeshes = [];
+
+      locations.forEach((loc) => {
+        if (loc.sky) {
+          return;
+        }
+
+        const pos = latLngToVec3(loc.lat, loc.lng, 1.025);
+        const marker = new THREE.Mesh(
+          new THREE.SphereGeometry(0.024, 14, 14),
+          new THREE.MeshBasicMaterial({ color: new THREE.Color(loc.color) })
+        );
+        marker.position.copy(pos);
+        marker.userData = loc;
+        markerGroup.add(marker);
+        markerMeshes.push(marker);
+
+        const ring = new THREE.Mesh(
+          new THREE.RingGeometry(0.031, 0.039, 28),
+          new THREE.MeshBasicMaterial({
+            color: new THREE.Color(loc.color),
+            transparent: true,
+            opacity: 0.58,
+            side: THREE.DoubleSide
+          })
+        );
+        ring.position.copy(pos);
+        ring.lookAt(0, 0, 0);
+        markerGroup.add(ring);
+      });
+
+      let isDragging = false;
+      let previousMouse = { x: 0, y: 0 };
+      let rotX = 0.1;
+      let rotY = 0;
+      let tick = 0;
+      const raycaster = new THREE.Raycaster();
+      const mouse = new THREE.Vector2();
+      const tooltip = document.getElementById("tooltip");
+
+      function setMouse(event) {
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      }
+
+      canvas.addEventListener("mousedown", (event) => {
+        isDragging = true;
+        autoRotate = false;
+        previousMouse = { x: event.clientX, y: event.clientY };
+        canvas.style.cursor = "grabbing";
+      });
+
+      window.addEventListener("mouseup", () => {
+        isDragging = false;
+        canvas.style.cursor = "grab";
+      });
+
+      window.addEventListener("mousemove", (event) => {
+        if (!isDragging) return;
+        targetRotY += (event.clientX - previousMouse.x) * 0.005;
+        targetRotX += (event.clientY - previousMouse.y) * 0.005;
+        targetRotX = Math.max(-1.4, Math.min(1.4, targetRotX));
+        previousMouse = { x: event.clientX, y: event.clientY };
+      });
+
+      canvas.addEventListener("wheel", (event) => {
+        event.preventDefault();
+        camera.position.z = Math.max(1.6, Math.min(5, camera.position.z + event.deltaY * 0.003));
+      }, { passive: false });
+
+      canvas.addEventListener("click", (event) => {
+        setMouse(event);
+        raycaster.setFromCamera(mouse, camera);
+        const hits = raycaster.intersectObjects(markerMeshes);
+        if (hits.length) {
+          const loc = hits[0].object.userData;
+          switchTab("world");
+          showLocDetail(loc.id);
+        }
+      });
+
+      canvas.addEventListener("mousemove", (event) => {
+        if (isDragging) return;
+        setMouse(event);
+        raycaster.setFromCamera(mouse, camera);
+        const hits = raycaster.intersectObjects(markerMeshes);
+        if (hits.length) {
+          const loc = hits[0].object.userData;
+          tooltip.style.display = "block";
+          tooltip.style.left = `${event.clientX + 14}px`;
+          tooltip.style.top = `${event.clientY - 28}px`;
+          tooltip.innerHTML = `<strong>${escapeHtml(loc.label)}</strong><br><span style="color:rgba(255,255,255,0.58);font-size:11px">${escapeHtml(loc.status)}</span>`;
+          canvas.style.cursor = "pointer";
+        } else {
+          tooltip.style.display = "none";
+          canvas.style.cursor = "grab";
+        }
+      });
+
+      function animate() {
+        requestAnimationFrame(animate);
+        tick += 0.01;
+        if (autoRotate) targetRotY += 0.0015;
+        rotX += (targetRotX - rotX) * 0.05;
+        rotY += (targetRotY - rotY) * 0.05;
+
+        globe.rotation.x = rotX;
+        globe.rotation.y = rotY;
+        clouds.rotation.x = rotX * 0.98;
+        clouds.rotation.y = rotY + tick * 0.018;
+        atmosphere.rotation.x = rotX;
+        atmosphere.rotation.y = rotY;
+        glow.rotation.x = rotX;
+        glow.rotation.y = rotY;
+        markerGroup.rotation.x = rotX;
+        markerGroup.rotation.y = rotY;
+        stars.rotation.y += 0.0002;
+        portal.material.rotation += 0.004;
+        portalHalo.material.rotation -= 0.0016;
+        portalGroup.position.y = 1.02 + Math.sin(tick * 0.7) * 0.018;
+
+        markerMeshes.forEach((marker) => {
+          marker.scale.setScalar(1 + Math.sin(tick * 2 + marker.position.x * 5) * 0.15);
+        });
+
+        renderer.render(scene, camera);
+      }
+
+      animate();
+
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    }
+
+    document.querySelector("nav").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-tab]");
+      if (button) switchTab(button.dataset.tab);
+    });
+
+    document.getElementById("loc-list").addEventListener("click", (event) => {
+      const card = event.target.closest("[data-location]");
+      if (card) showLocDetail(card.dataset.location);
+    });
+
+    document.getElementById("loc-detail").addEventListener("click", (event) => {
+      if (event.target.closest("#back-to-locations")) renderLocList();
+    });
+
+    renderLocList();
+    renderTimeline();
+    renderPlaces();
+    renderCharacters();
+    renderCommands();
+    initGlobe();
+  </script>
+</body>
+</html>
