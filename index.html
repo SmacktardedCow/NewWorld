@@ -141,6 +141,60 @@
       color: #fff;
     }
 
+    .live-tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #e24b4a;
+      box-shadow: 0 0 12px rgba(226, 75, 74, 0.9);
+      animation: livePulse 1.15s ease-in-out infinite;
+    }
+
+    .sleep-status {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 1px;
+      color: rgba(255, 255, 255, 0.44);
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .sleep-status span:nth-child(1) {
+      font-size: 11px;
+    }
+
+    .sleep-status span:nth-child(2) {
+      font-size: 9px;
+    }
+
+    .sleep-status span:nth-child(3) {
+      font-size: 7px;
+    }
+
+    .sleep-status[hidden],
+    .live-dot[hidden] {
+      display: none;
+    }
+
+    @keyframes livePulse {
+      0%,
+      100% {
+        opacity: 0.55;
+        transform: scale(0.86);
+      }
+
+      50% {
+        opacity: 1;
+        transform: scale(1.18);
+      }
+    }
+
     #panel-wrap {
       flex: 1;
       display: flex;
@@ -543,6 +597,100 @@
       text-align: right;
     }
 
+    #live-fade {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      background: #000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.75s ease;
+    }
+
+    #live-fade.active {
+      opacity: 0.82;
+    }
+
+    #live-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: grid;
+      place-items: center;
+      padding: 28px;
+      pointer-events: none;
+      opacity: 0;
+      transform: scale(0.985);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+
+    #live-overlay.active {
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: auto;
+    }
+
+    .live-shell {
+      width: min(1180px, calc(100vw - 48px));
+      background: rgba(4, 5, 12, 0.94);
+      border: 1px solid rgba(226, 75, 74, 0.38);
+      border-radius: 14px;
+      box-shadow: 0 28px 90px rgba(0, 0, 0, 0.72), 0 0 42px rgba(226, 75, 74, 0.18);
+      overflow: hidden;
+    }
+
+    .live-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 13px 15px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .live-title {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .live-close {
+      width: 30px;
+      height: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.06);
+      color: rgba(255, 255, 255, 0.78);
+      cursor: pointer;
+      font: inherit;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .live-close:hover {
+      color: #fff;
+      background: rgba(226, 75, 74, 0.22);
+    }
+
+    .live-frame-wrap {
+      position: relative;
+      aspect-ratio: 16 / 9;
+      background: #000;
+    }
+
+    .live-frame-wrap iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
     @media (max-width: 760px) {
       body {
         overflow: auto;
@@ -589,6 +737,14 @@
       #instructions {
         display: none;
       }
+
+      #live-overlay {
+        padding: 14px;
+      }
+
+      .live-shell {
+        width: 100%;
+      }
     }
   </style>
 </head>
@@ -605,6 +761,11 @@
         <button class="tab" type="button" data-tab="places">Places</button>
         <button class="tab" type="button" data-tab="characters">Characters</button>
         <button class="tab active" type="button" data-tab="commands">Commands</button>
+        <button class="tab live-tab" type="button" data-tab="live">
+          <span>Live</span>
+          <span class="live-dot" id="live-tab-dot"></span>
+          <span class="sleep-status" id="live-tab-sleep" hidden><span>z</span><span>z</span><span>z</span></span>
+        </button>
       </nav>
     </header>
     <div id="panel-wrap">
@@ -641,6 +802,16 @@
           </section>
         </div>
       </div>
+    </div>
+  </div>
+  <div id="live-fade"></div>
+  <div id="live-overlay" aria-hidden="true">
+    <div class="live-shell">
+      <div class="live-header">
+        <div class="live-title"><span class="live-dot"></span><span>Cows Live Feed</span></div>
+        <button class="live-close" type="button" id="live-close" aria-label="Close live player">&times;</button>
+      </div>
+      <div class="live-frame-wrap" id="live-frame-wrap"></div>
     </div>
   </div>
 
@@ -856,7 +1027,8 @@
       timeline: ["Milkathon Timeline", "M1 through M9, still ongoing"],
       places: ["Places", "Worlds, portals, and depths"],
       characters: ["Characters", "Key people and beings"],
-      commands: ["Commands", "Faction and citizen commands"]
+      commands: ["Commands", "Faction and citizen commands"],
+      live: ["Live", "smacktardycow on Twitch"]
     };
 
     let currentTab = "commands";
@@ -865,7 +1037,9 @@
     let markerGroup;
     let targetRotX = 0.1;
     let targetRotY = 0;
+    let targetCameraZ = 3.35;
     let autoRotate = true;
+    let liveOpenTimer = null;
 
     const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({
       "&": "&amp;",
@@ -876,6 +1050,10 @@
     })[char]);
 
     function switchTab(tab) {
+      if (tab === "live") {
+        openLive();
+        return;
+      }
       currentTab = tab;
       document.querySelectorAll(".tab").forEach((button) => {
         button.classList.toggle("active", button.dataset.tab === tab);
@@ -891,6 +1069,57 @@
       if (tab === "places") renderPlaces();
       if (tab === "characters") renderCharacters();
       if (tab === "commands") renderCommands();
+    }
+
+    function setLiveStatus(status) {
+      const dot = document.getElementById("live-tab-dot");
+      const sleep = document.getElementById("live-tab-sleep");
+      if (!dot || !sleep) return;
+      const isOffline = status === "offline";
+      dot.hidden = isOffline;
+      sleep.hidden = !isOffline;
+    }
+
+    function createTwitchFrame() {
+      const wrap = document.getElementById("live-frame-wrap");
+      if (!wrap || wrap.querySelector("iframe")) return;
+      const iframe = document.createElement("iframe");
+      iframe.allowFullscreen = true;
+      iframe.setAttribute("allow", "autoplay; fullscreen; picture-in-picture");
+      iframe.src = "https://player.twitch.tv/?channel=smacktardycow&parent=smacktardedcow.github.io&muted=false";
+      wrap.appendChild(iframe);
+    }
+
+    function openLive() {
+      const city = locations.find((loc) => loc.id === "city");
+      if (city) focusLocation(city);
+      targetCameraZ = 1.9;
+      autoRotate = false;
+      setLiveStatus("live");
+      document.querySelectorAll(".tab").forEach((button) => {
+        button.classList.toggle("active", button.dataset.tab === "live");
+      });
+
+      clearTimeout(liveOpenTimer);
+      liveOpenTimer = setTimeout(() => {
+        document.getElementById("live-fade").classList.add("active");
+        createTwitchFrame();
+        setTimeout(() => {
+          const overlay = document.getElementById("live-overlay");
+          overlay.classList.add("active");
+          overlay.setAttribute("aria-hidden", "false");
+        }, 430);
+      }, 720);
+    }
+
+    function closeLive() {
+      clearTimeout(liveOpenTimer);
+      const overlay = document.getElementById("live-overlay");
+      overlay.classList.remove("active");
+      overlay.setAttribute("aria-hidden", "true");
+      document.getElementById("live-fade").classList.remove("active");
+      targetCameraZ = 3.35;
+      switchTab(currentTab === "live" ? "commands" : currentTab);
     }
 
     function renderLocList() {
@@ -1825,7 +2054,8 @@
 
       canvas.addEventListener("wheel", (event) => {
         event.preventDefault();
-        camera.position.z = Math.max(1.6, Math.min(5, camera.position.z + event.deltaY * 0.003));
+        targetCameraZ = Math.max(1.6, Math.min(5, targetCameraZ + event.deltaY * 0.003));
+        camera.position.z = targetCameraZ;
       }, { passive: false });
 
       canvas.addEventListener("click", (event) => {
@@ -1863,6 +2093,7 @@
         if (autoRotate) targetRotY -= 0.0015;
         rotX += (targetRotX - rotX) * 0.05;
         rotY += (targetRotY - rotY) * 0.05;
+        camera.position.z += (targetCameraZ - camera.position.z) * 0.045;
 
         globe.rotation.x = rotX;
         globe.rotation.y = rotY;
@@ -1909,6 +2140,14 @@
 
     document.getElementById("loc-detail").addEventListener("click", (event) => {
       if (event.target.closest("#back-to-locations")) renderLocList();
+    });
+
+    document.getElementById("live-close").addEventListener("click", closeLive);
+
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && document.getElementById("live-overlay").classList.contains("active")) {
+        closeLive();
+      }
     });
 
     renderLocList();
