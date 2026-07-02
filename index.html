@@ -615,6 +615,126 @@
       flex-wrap: wrap;
     }
 
+    /* --- Player card overlay --- */
+
+    #playercard-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 8, 18, 0.6);
+      backdrop-filter: blur(2px);
+      z-index: 500;
+      display: none;
+      justify-content: flex-end;
+    }
+
+    #playercard-overlay.open {
+      display: flex;
+    }
+
+    #playercard {
+      width: min(340px, 90vw);
+      height: 100%;
+      background: linear-gradient(180deg, #1a1526, #120e1c);
+      border-left: 1px solid rgba(127, 119, 221, 0.35);
+      box-shadow: -20px 0 40px rgba(0, 0, 0, 0.5);
+      padding: 20px;
+      overflow-y: auto;
+      position: relative;
+      transform: translateX(100%);
+      transition: transform 0.25s ease;
+    }
+
+    #playercard-overlay.open #playercard {
+      transform: translateX(0);
+    }
+
+    .pc-close {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 20px;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .pc-close:hover {
+      color: #fff;
+    }
+
+    .pc-header {
+      padding-right: 26px;
+      margin-bottom: 14px;
+    }
+
+    .pc-username {
+      color: #fff;
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      word-break: break-word;
+    }
+
+    .pc-portrait {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border: 1px solid rgba(127, 119, 221, 0.3);
+      border-radius: 10px;
+      background: rgba(127, 119, 221, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    .pc-portrait svg {
+      width: 55%;
+      height: 55%;
+    }
+
+    .pc-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding-bottom: 14px;
+      margin-bottom: 14px;
+      border-bottom: 1px solid rgba(127, 119, 221, 0.2);
+    }
+
+    .pc-stat-line {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    .pc-stat-line b {
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .pc-stat-heading {
+      color: var(--purple-soft);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .pc-weapons-list,
+    .pc-events-list {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .pc-events {
+      padding-top: 2px;
+    }
+
     .cmd-name {
       color: var(--purple-soft);
       font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
@@ -932,7 +1052,6 @@
               <button class="citizen-sort-btn active" type="button" data-sort="milkers">Highest Milkers</button>
               <button class="citizen-sort-btn" type="button" data-sort="level">Highest Level</button>
             </div>
-            <div id="citizen-detail" hidden></div>
             <div id="citizens-list"></div>
           </section>
 
@@ -1387,36 +1506,51 @@
         `).join("");
 
       list.querySelectorAll(".citizen-row").forEach((row) => {
-        row.addEventListener("click", () => showCitizenDetail(row.dataset.citizen));
+        row.addEventListener("click", () => openPlayerCard(row.dataset.citizen));
       });
     }
 
-    function showCitizenDetail(name) {
-      selectedCitizen = name;
-      const stats = citizensData[name];
-      if (!stats) return;
-      const detail = document.getElementById("citizen-detail");
-      detail.hidden = false;
-
-      // Any field beyond milkers/level is treated as a "special" flag/stat
-      const extras = Object.keys(stats).filter((k) => k !== "milkers" && k !== "level");
-
-      detail.innerHTML = `
-        <button class="cd-close" type="button" aria-label="Close">&times;</button>
-        <div class="cd-name">${escapeHtml(name)}</div>
-        <div class="cd-stats">
-          <span class="citizen-stat">Level <b>${escapeHtml(stats.level ?? "-")}</b></span>
-          <span class="citizen-stat"><b>${escapeHtml(stats.milkers ?? 0)}</b> milkers</span>
-          ${extras.map((k) => `<span class="citizen-stat">${escapeHtml(k)}: <b>${escapeHtml(stats[k])}</b></span>`).join("")}
-        </div>
+    function renderPlayerCardAvatar() {
+      // Placeholder stick-figure avatar. Swap this SVG out later for real per-user
+      // art/portraits - everything avatar-related lives in this one function.
+      return `
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#7f77dd" stroke-width="5" stroke-linecap="round">
+          <circle cx="50" cy="24" r="14" />
+          <line x1="50" y1="38" x2="50" y2="70" />
+          <line x1="50" y1="50" x2="30" y2="58" />
+          <line x1="50" y1="50" x2="70" y2="58" />
+          <line x1="50" y1="70" x2="35" y2="95" />
+          <line x1="50" y1="70" x2="65" y2="95" />
+        </svg>
       `;
+    }
 
-      detail.querySelector(".cd-close").addEventListener("click", () => {
-        detail.hidden = true;
-        selectedCitizen = null;
-      });
+    function openPlayerCard(name) {
+      selectedCitizen = name;
+      const stats = citizensData[name] || {};
 
-      detail.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      document.getElementById("pc-username").textContent = name;
+      document.getElementById("pc-portrait").innerHTML = renderPlayerCardAvatar();
+      document.getElementById("pc-level").textContent = stats.level ?? "-";
+      document.getElementById("pc-milkers").textContent = stats.milkers ?? 0;
+      document.getElementById("pc-faction").textContent = stats.faction ?? "-";
+
+      const weapons = Array.isArray(stats.specialWeapons) ? stats.specialWeapons : [];
+      document.getElementById("pc-weapons").innerHTML = weapons.length
+        ? weapons.map((w) => escapeHtml(w)).join("<br>")
+        : "-";
+
+      const events = Array.isArray(stats.events) ? stats.events : [];
+      document.getElementById("pc-events").innerHTML = events.length
+        ? events.map((e) => escapeHtml(e)).join("<br>")
+        : "-";
+
+      document.getElementById("playercard-overlay").classList.add("open");
+    }
+
+    function closePlayerCard() {
+      document.getElementById("playercard-overlay").classList.remove("open");
+      selectedCitizen = null;
     }
 
     function renderTimeline() {
@@ -2400,6 +2534,43 @@
         renderCitizens();
       });
     });
+
+    document.querySelector(".pc-close").addEventListener("click", closePlayerCard);
+    document.getElementById("playercard-overlay").addEventListener("click", (e) => {
+      if (e.target.id === "playercard-overlay") closePlayerCard();
+    });
   </script>
+  <div id="playercard-overlay">
+    <aside id="playercard">
+      <button class="pc-close" type="button" aria-label="Close">&times;</button>
+
+      <div class="pc-header">
+        <div class="pc-username" id="pc-username">Username</div>
+      </div>
+
+      <div class="pc-portrait" id="pc-portrait">
+        <!-- Placeholder stick-figure avatar. Swap the SVG in renderPlayerCardAvatar()
+             for real art later - it's isolated in one function on purpose. -->
+      </div>
+
+      <div class="pc-stats">
+        <div class="pc-stats-left">
+          <div class="pc-stat-line">Level: <b id="pc-level">-</b></div>
+          <div class="pc-stat-line">Milkers: <b id="pc-milkers">-</b></div>
+          <div class="pc-stat-line">Faction: <b id="pc-faction">-</b></div>
+        </div>
+        <div class="pc-stats-right">
+          <div class="pc-stat-heading">Special Weapons</div>
+          <div id="pc-weapons" class="pc-weapons-list">-</div>
+        </div>
+      </div>
+
+      <div class="pc-events">
+        <div class="pc-stat-heading">Events</div>
+        <div id="pc-events" class="pc-events-list">-</div>
+      </div>
+    </aside>
+  </div>
+
 </body>
 </html>
