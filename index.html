@@ -538,6 +538,83 @@
       color: var(--purple-soft);
     }
 
+    .citizen-sort-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .citizen-sort-btn {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(127, 119, 221, 0.3);
+      background: rgba(127, 119, 221, 0.06);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .citizen-sort-btn:hover {
+      background: rgba(127, 119, 221, 0.14);
+      color: #fff;
+    }
+
+    .citizen-sort-btn.active {
+      background: var(--purple-soft);
+      border-color: var(--purple-soft);
+      color: #14101f;
+    }
+
+    .citizen-row {
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .citizen-row:hover {
+      background: rgba(127, 119, 221, 0.14);
+      border-color: rgba(127, 119, 221, 0.4);
+    }
+
+    .citizen-rank {
+      color: var(--faint);
+      font-size: 10px;
+      width: 22px;
+      flex-shrink: 0;
+    }
+
+    #citizen-detail {
+      margin-bottom: 12px;
+      padding: 14px;
+      border: 1px solid rgba(127, 119, 221, 0.3);
+      border-radius: 10px;
+      background: rgba(127, 119, 221, 0.08);
+    }
+
+    #citizen-detail .cd-close {
+      float: right;
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    #citizen-detail .cd-name {
+      color: #fff;
+      font-size: 15px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    #citizen-detail .cd-stats {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
     .cmd-name {
       color: var(--purple-soft);
       font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
@@ -851,6 +928,11 @@
           <section class="content-section" id="tab-citizens">
             <div class="section-title">Citizens</div>
             <div id="citizens-status"></div>
+            <div class="citizen-sort-row">
+              <button class="citizen-sort-btn active" type="button" data-sort="milkers">Highest Milkers</button>
+              <button class="citizen-sort-btn" type="button" data-sort="level">Highest Level</button>
+            </div>
+            <div id="citizen-detail" hidden></div>
             <div id="citizens-list"></div>
           </section>
 
@@ -1098,6 +1180,8 @@
     const CITIZENS_REFRESH_MS = 30000; // how often the site re-checks for updates
 
     let citizensData = {};
+    let citizenSortBy = "milkers";
+    let selectedCitizen = null;
 
     let currentTab = "commands";
     let selectedLoc = null;
@@ -1285,10 +1369,15 @@
         list.innerHTML = `<div class="detail-text">No citizens loaded yet.</div>`;
         return;
       }
-      list.innerHTML = entries
-        .sort((a, b) => a[0].localeCompare(b[0]))
-        .map(([name, stats]) => `
-          <div class="citizen-row">
+      const sorted = entries.slice().sort((a, b) => {
+        const av = Number(a[1][citizenSortBy]) || 0;
+        const bv = Number(b[1][citizenSortBy]) || 0;
+        return bv - av;
+      });
+      list.innerHTML = sorted
+        .map(([name, stats], i) => `
+          <div class="citizen-row" data-citizen="${escapeHtml(name)}">
+            <div class="citizen-rank">#${i + 1}</div>
             <div class="citizen-name">${escapeHtml(name)}</div>
             <div class="citizen-stats">
               <span class="citizen-stat">Lvl <b>${escapeHtml(stats.level ?? "-")}</b></span>
@@ -1296,6 +1385,38 @@
             </div>
           </div>
         `).join("");
+
+      list.querySelectorAll(".citizen-row").forEach((row) => {
+        row.addEventListener("click", () => showCitizenDetail(row.dataset.citizen));
+      });
+    }
+
+    function showCitizenDetail(name) {
+      selectedCitizen = name;
+      const stats = citizensData[name];
+      if (!stats) return;
+      const detail = document.getElementById("citizen-detail");
+      detail.hidden = false;
+
+      // Any field beyond milkers/level is treated as a "special" flag/stat
+      const extras = Object.keys(stats).filter((k) => k !== "milkers" && k !== "level");
+
+      detail.innerHTML = `
+        <button class="cd-close" type="button" aria-label="Close">&times;</button>
+        <div class="cd-name">${escapeHtml(name)}</div>
+        <div class="cd-stats">
+          <span class="citizen-stat">Level <b>${escapeHtml(stats.level ?? "-")}</b></span>
+          <span class="citizen-stat"><b>${escapeHtml(stats.milkers ?? 0)}</b> milkers</span>
+          ${extras.map((k) => `<span class="citizen-stat">${escapeHtml(k)}: <b>${escapeHtml(stats[k])}</b></span>`).join("")}
+        </div>
+      `;
+
+      detail.querySelector(".cd-close").addEventListener("click", () => {
+        detail.hidden = true;
+        selectedCitizen = null;
+      });
+
+      detail.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
 
     function renderTimeline() {
@@ -2270,6 +2391,15 @@
 
     fetchCitizens();
     setInterval(fetchCitizens, CITIZENS_REFRESH_MS);
+
+    document.querySelectorAll(".citizen-sort-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        citizenSortBy = btn.dataset.sort;
+        document.querySelectorAll(".citizen-sort-btn").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        renderCitizens();
+      });
+    });
   </script>
 </body>
 </html>
