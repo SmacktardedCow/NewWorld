@@ -487,6 +487,57 @@
       border-bottom: 0;
     }
 
+    #citizens-status {
+      margin-bottom: 10px;
+      color: var(--faint);
+      font-size: 10px;
+      letter-spacing: 0.02em;
+    }
+
+    #citizens-status.error {
+      color: #f08080;
+    }
+
+    .citizen-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 10px;
+      margin-bottom: 6px;
+      border: 1px solid rgba(127, 119, 221, 0.18);
+      border-radius: 8px;
+      background: rgba(127, 119, 221, 0.06);
+    }
+
+    .citizen-name {
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .citizen-stats {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .citizen-stat {
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--muted);
+      font-size: 10px;
+      white-space: nowrap;
+    }
+
+    .citizen-stat b {
+      color: var(--purple-soft);
+    }
+
     .cmd-name {
       color: var(--purple-soft);
       font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
@@ -760,6 +811,7 @@
         <button class="tab" type="button" data-tab="timeline">Timeline</button>
         <button class="tab" type="button" data-tab="places">Places</button>
         <button class="tab" type="button" data-tab="characters">Characters</button>
+        <button class="tab" type="button" data-tab="citizens">Citizens</button>
         <button class="tab active" type="button" data-tab="commands">Commands</button>
         <button class="tab live-tab" type="button" data-tab="live">
           <span>Live</span>
@@ -794,6 +846,12 @@
           <section class="content-section" id="tab-characters">
             <div class="section-title">Characters</div>
             <div id="characters-list"></div>
+          </section>
+
+          <section class="content-section" id="tab-citizens">
+            <div class="section-title">Citizens</div>
+            <div id="citizens-status"></div>
+            <div id="citizens-list"></div>
           </section>
 
           <section class="content-section active" id="tab-commands">
@@ -1027,9 +1085,19 @@
       timeline: ["Milkathon Timeline", "M1 through M9, still ongoing"],
       places: ["Places", "Worlds, portals, and depths"],
       characters: ["Characters", "Key people and beings"],
+      citizens: ["Citizens", "Everyone who has ever chatted"],
       commands: ["Commands", "Faction and citizen commands"],
       live: ["Live", "smacktardycow on Twitch"]
     };
+
+    // --- Streamer.bot data feed config ---
+    // Realtime Database URL from your Firebase project (Project Settings > General,
+    // or the URL shown on the Realtime Database page). Looks like:
+    // https://your-project-id-default-rtdb.firebaseio.com
+    const FIREBASE_DB_URL = "https://new-world-a1aed-default-rtdb.europe-west1.firebasedatabase.app";
+    const CITIZENS_REFRESH_MS = 30000; // how often the site re-checks for updates
+
+    let citizensData = {};
 
     let currentTab = "commands";
     let selectedLoc = null;
@@ -1068,6 +1136,7 @@
       if (tab === "timeline") renderTimeline();
       if (tab === "places") renderPlaces();
       if (tab === "characters") renderCharacters();
+      if (tab === "citizens") renderCitizens();
       if (tab === "commands") renderCommands();
     }
 
@@ -1186,6 +1255,47 @@
           <div class="lore-text">${escapeHtml(character.desc)}</div>
         </article>
       `).join("");
+    }
+
+    async function fetchCitizens() {
+      const status = document.getElementById("citizens-status");
+      if (FIREBASE_DB_URL.includes("YOUR-PROJECT-ID")) {
+        status.textContent = "Not connected yet - add your Firebase URL in the script.";
+        status.classList.add("error");
+        return;
+      }
+      try {
+        const res = await fetch(`${FIREBASE_DB_URL}/users.json`, { cache: "no-store" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        citizensData = data || {};
+        status.classList.remove("error");
+        status.textContent = `${Object.keys(citizensData).length} citizens - updated ${new Date().toLocaleTimeString()}`;
+        if (currentTab === "citizens") renderCitizens();
+      } catch (err) {
+        status.classList.add("error");
+        status.textContent = "Couldn't reach the citizen data feed.";
+      }
+    }
+
+    function renderCitizens() {
+      const list = document.getElementById("citizens-list");
+      const entries = Object.entries(citizensData);
+      if (!entries.length) {
+        list.innerHTML = `<div class="detail-text">No citizens loaded yet.</div>`;
+        return;
+      }
+      list.innerHTML = entries
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([name, stats]) => `
+          <div class="citizen-row">
+            <div class="citizen-name">${escapeHtml(name)}</div>
+            <div class="citizen-stats">
+              <span class="citizen-stat">Lvl <b>${escapeHtml(stats.level ?? "-")}</b></span>
+              <span class="citizen-stat"><b>${escapeHtml(stats.milkers ?? 0)}</b> milkers</span>
+            </div>
+          </div>
+        `).join("");
     }
 
     function renderTimeline() {
@@ -2154,8 +2264,12 @@
     renderTimeline();
     renderPlaces();
     renderCharacters();
+    renderCitizens();
     renderCommands();
     initGlobe();
+
+    fetchCitizens();
+    setInterval(fetchCitizens, CITIZENS_REFRESH_MS);
   </script>
 </body>
 </html>
