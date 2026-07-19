@@ -52,13 +52,9 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       inset: 0;
       z-index: 0;
       background:
-        radial-gradient(circle at 50% 18%, rgba(155, 109, 255, 0.22), transparent 34%),
-        radial-gradient(circle at 20% 75%, rgba(82, 63, 180, 0.18), transparent 28%),
-        radial-gradient(circle at 80% 72%, rgba(216, 90, 255, 0.10), transparent 26%),
-        linear-gradient(rgba(168, 120, 255, 0.032) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(168, 120, 255, 0.032) 1px, transparent 1px),
-        #020408;
-      background-size: auto, auto, auto, 42px 42px, 42px 42px, auto;
+        linear-gradient(132deg, rgba(26, 15, 57, 0.34), transparent 34%),
+        linear-gradient(312deg, rgba(5, 45, 59, 0.24), transparent 40%),
+        #010207;
     }
 
     body::after {
@@ -66,7 +62,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       position: fixed;
       inset: 0;
       z-index: 0;
-      opacity: 0.36;
+      opacity: 0.17;
       background-image:
         radial-gradient(circle, rgba(255, 255, 255, 0.8) 0 1px, transparent 1.5px),
         radial-gradient(circle, rgba(127, 119, 221, 0.8) 0 1px, transparent 1.5px);
@@ -347,6 +343,49 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       border-color: rgba(255, 87, 99, 0.5);
       background: rgba(255, 69, 82, 0.14);
       color: #fff;
+    }
+
+    .sector-command-guide {
+      flex: 0 0 auto;
+      border-bottom: 1px solid rgba(255, 79, 91, 0.22);
+      padding: 14px 15px 13px;
+      background:
+        linear-gradient(110deg, rgba(119, 11, 22, 0.30), transparent 68%),
+        rgba(27, 6, 12, 0.52);
+    }
+
+    .sector-command-guide-copy {
+      color: rgba(255, 232, 234, 0.76);
+      font-size: 11px;
+      line-height: 1.45;
+    }
+
+    .sector-command-guide-title {
+      margin-top: 12px;
+      color: #ff9ca4;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+
+    .sector-command-guide-list {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 4px;
+      margin-top: 7px;
+    }
+
+    .sector-command-guide-list code {
+      display: block;
+      border: 1px solid rgba(255, 108, 119, 0.31);
+      border-radius: 4px;
+      padding: 5px 7px;
+      background: rgba(255, 68, 83, 0.09);
+      color: rgba(255, 244, 245, 0.88);
+      font-family: inherit;
+      font-size: 9px;
+      font-weight: 800;
     }
 
     #sectors-list {
@@ -1716,6 +1755,38 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       filter: drop-shadow(0 0 9px rgba(127, 119, 221, 0.55));
     }
 
+    .sector-card-player-portrait > * {
+      grid-area: 1 / 1;
+    }
+
+    .sector-governor-fallback {
+      display: grid;
+      place-items: center;
+      gap: 4px;
+      padding: 10px;
+      color: rgba(255, 255, 255, 0.72);
+      text-align: center;
+    }
+
+    .sector-governor-initials {
+      color: #75eaff;
+      font-size: 31px;
+      font-weight: 1000;
+      line-height: 1;
+      text-shadow: 0 0 16px rgba(70, 212, 255, 0.64);
+    }
+
+    .sector-governor-fallback small {
+      max-width: 100%;
+      overflow: hidden;
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-overflow: ellipsis;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
     .sector-effects {
       display: grid;
       gap: 7px;
@@ -2032,6 +2103,94 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       color: #fff;
     }
 
+    #active-effects {
+      position: fixed;
+      left: 50%;
+      bottom: 20px;
+      z-index: 14;
+      width: min(820px, calc(100vw - 320px));
+      border: 1px solid rgba(150, 179, 214, 0.27);
+      border-radius: 6px;
+      background: rgba(3, 7, 14, 0.88);
+      box-shadow:
+        0 18px 55px rgba(0, 0, 0, 0.58),
+        inset 0 1px rgba(255, 255, 255, 0.035);
+      backdrop-filter: blur(14px);
+      opacity: 0;
+      overflow: visible;
+      pointer-events: none;
+      transform: translate(-50%, calc(100% + 42px));
+      transition: opacity 0.28s ease, transform 0.42s cubic-bezier(0.18, 0.82, 0.24, 1);
+    }
+
+    body.panel-closed:not(.sectors-open):not(.live-open) #active-effects {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate(-50%, 0);
+    }
+
+    .active-effects-title {
+      position: absolute;
+      left: 16px;
+      bottom: 100%;
+      padding: 6px 12px 5px;
+      border: 1px solid rgba(150, 179, 214, 0.27);
+      border-bottom: 0;
+      border-radius: 5px 5px 0 0;
+      background: rgba(3, 7, 14, 0.94);
+      color: #d8e8f7;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+    }
+
+    .active-effects-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      min-height: 72px;
+    }
+
+    .active-effect {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr);
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      padding: 13px 16px;
+    }
+
+    .active-effect + .active-effect {
+      border-left: 1px solid rgba(150, 179, 214, 0.16);
+    }
+
+    .active-effect-index {
+      display: grid;
+      width: 28px;
+      height: 28px;
+      place-items: center;
+      border: 1px solid rgba(78, 206, 214, 0.38);
+      color: #77dce1;
+      font-size: 10px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .active-effect-name {
+      color: #fff;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.2;
+      text-transform: uppercase;
+    }
+
+    .active-effect-copy {
+      margin-top: 3px;
+      color: rgba(226, 235, 245, 0.62);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
     #live-fade {
       position: fixed;
       inset: 0;
@@ -2181,6 +2340,29 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
         display: none;
       }
 
+      #active-effects {
+        bottom: 12px;
+        width: calc(100vw - 24px);
+        overflow: hidden;
+      }
+
+      .active-effects-list {
+        display: flex;
+        min-height: 76px;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        scrollbar-width: none;
+      }
+
+      .active-effects-list::-webkit-scrollbar {
+        display: none;
+      }
+
+      .active-effect {
+        min-width: min(300px, calc(100vw - 50px));
+        padding: 12px 14px;
+      }
+
       #live-overlay {
         padding: 14px;
       }
@@ -2212,8 +2394,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       </div>
       <nav aria-label="Map sections">
         <button class="tab" type="button" data-tab="citizens">Citizens</button>
-        <button class="tab" type="button" data-tab="sectors">Sectors</button>
-        <button class="tab" type="button" data-tab="commands">Commands</button>
+        <button class="tab" type="button" data-tab="sectors">Sectors + Commands</button>
         <button class="tab live-tab" type="button" data-tab="live">
           <span>Live</span>
           <span class="live-dot" id="live-tab-dot"></span>
@@ -2279,13 +2460,45 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
   <aside id="sectors-panel" aria-hidden="true">
     <div class="sectors-panel-header">
       <div>
-        <div class="sectors-panel-title">Sector Control</div>
+        <div class="sectors-panel-title">Sectors + Commands</div>
         <div class="sectors-panel-subtitle">New World occupation status</div>
       </div>
       <button class="sectors-panel-close" type="button" aria-label="Close sectors panel">&times;</button>
     </div>
+    <div class="sector-command-guide">
+      <p class="sector-command-guide-copy">Click through the sectors below to see what commands are available.</p>
+      <div class="sector-command-guide-title">Universal Commands</div>
+      <div class="sector-command-guide-list" aria-label="Universal commands">
+        <code>!gamble</code>
+        <code>!plinko</code>
+        <code>!fish</code>
+        <code>!shoot</code>
+        <code>!work</code>
+        <code>!business</code>
+        <code>!milkers</code>
+      </div>
+    </div>
     <div id="sectors-list"></div>
   </aside>
+  <section id="active-effects" aria-label="New World active effects">
+    <div class="active-effects-title">New World Active Effects</div>
+    <div class="active-effects-list">
+      <article class="active-effect">
+        <span class="active-effect-index">01</span>
+        <div>
+          <div class="active-effect-name">Fishing Tax</div>
+          <div class="active-effect-copy">50% of Milkers earned are given to the Sector 2 boss.</div>
+        </div>
+      </article>
+      <article class="active-effect">
+        <span class="active-effect-index">02</span>
+        <div>
+          <div class="active-effect-name">Gamble Limits</div>
+          <div class="active-effect-copy">Citizens may only gamble 10 times a day.</div>
+        </div>
+      </article>
+    </div>
+  </section>
   <div id="live-fade"></div>
   <div id="live-overlay" aria-hidden="true">
     <div class="live-shell">
@@ -2727,6 +2940,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
         displayedLeader: bossName,
         displayedLeaderRole: "Boss",
         governor: "",
+        governorProfileImageUrl: "",
         deputies: [],
         garrisonedTroops: sectorTroops[number] || 0,
         objectiveName: "",
@@ -2802,6 +3016,49 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       "\"": "&quot;",
       "'": "&#39;"
     })[char]);
+
+    function getGovernorPortraitDetails(state, fallbackName) {
+      const name = String(state?.governor || fallbackName || "Unclaimed");
+      const citizenKey = Object.keys(citizensData).find(
+        (login) => login.toLowerCase() === name.toLowerCase()
+      );
+      const citizen = citizenKey ? citizensData[citizenKey] || {} : {};
+      const candidates = [
+        state?.governorProfileImageUrl,
+        citizen.profileImageUrl,
+        citizen.profileImage,
+        citizen.profilePictureUrl,
+        citizen.profilePicture,
+        citizen.avatarUrl,
+        citizen.avatar
+      ];
+      const imageUrl = candidates
+        .map((value) => String(value || "").trim())
+        .find((value) => /^https?:\/\//i.test(value)) || "";
+      const initials = name
+        .split(/[^a-z0-9]+/i)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part.charAt(0).toUpperCase())
+        .join("") || "?";
+
+      return { name, imageUrl, initials };
+    }
+
+    function renderGovernorPortrait(state, fallbackName) {
+      const governor = getGovernorPortraitDetails(state, fallbackName);
+      return `
+        <div class="sector-card-portrait sector-card-player-portrait">
+          <div class="sector-governor-fallback" aria-hidden="true">
+            <span class="sector-governor-initials">${escapeHtml(governor.initials)}</span>
+            <small>${escapeHtml(governor.name)}</small>
+          </div>
+          ${governor.imageUrl ? `
+            <img src="${escapeHtml(governor.imageUrl)}" alt="Governor ${escapeHtml(governor.name)}" />
+          ` : ""}
+        </div>
+      `;
+    }
 
     function switchTab(tab) {
       if (tab === "live") {
@@ -2889,6 +3146,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       const city = locations.find((loc) => loc.id === "city");
       if (city) focusLocation(city);
       targetCameraZ = 5;
+      document.body.classList.add("live-open");
       setLiveStatus("live");
       document.querySelectorAll(".tab").forEach((button) => {
         button.classList.toggle("active", button.dataset.tab === "live");
@@ -2908,6 +3166,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
 
     function closeLive() {
       clearTimeout(liveOpenTimer);
+      document.body.classList.remove("live-open");
       const overlay = document.getElementById("live-overlay");
       overlay.classList.remove("active");
       overlay.setAttribute("aria-hidden", "true");
@@ -3003,6 +3262,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
         status.classList.remove("error");
         status.textContent = `${Object.keys(citizensData).length} citizens - updated ${new Date().toLocaleTimeString()}`;
         if (currentTab === "citizens") renderCitizens();
+        if (currentTab === "sectors") renderSectorsPanel();
       } catch (err) {
         status.classList.add("error");
         status.textContent = "Couldn't reach the citizen data feed.";
@@ -3053,6 +3313,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
         (bossAlive ? "Boss" : data.governor ? "Governor" : "Unclaimed")
       );
       state.governor = String(data.governor || "");
+      state.governorProfileImageUrl = String(data.governorProfileImageUrl || "");
       state.deputies = Array.isArray(data.deputies)
         ? data.deputies.map((name) => String(name))
         : [];
@@ -3204,12 +3465,26 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       );
     }
 
+    function isSectorFullyLiberated(sectorNumber) {
+      const state = sectorStates[sectorNumber];
+      if (!state || state.loaded === false) return false;
+
+      const liberatedControl = clampControl(
+        state.liberatedControl,
+        state.controlOwner === "liberated"
+          ? state.displayedControl ?? state.control
+          : 0
+      );
+
+      return isSectorLiberated(sectorNumber) && liberatedControl >= 100;
+    }
+
     function renderSectorAccessWarning(sectorNumber) {
       let message = "";
       let corrupted = false;
 
       if (sectorNumber === 2) {
-        if (sectorStates[2].available === false) {
+        if (!isSectorFullyLiberated(1)) {
           message = "Liberate Sector 1 to access";
         } else if (getSectorDisplayMeta(sectorStates[2]).fullEnemyControl) {
           message = "BlackHoof has full control of the Ocean<br>Use !raid Sector 2 or !raid Ocean";
@@ -3254,6 +3529,13 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
     function renderOceanTooltip(region) {
       const meta = getSectorDisplayMeta(sector2State);
       const accessWarning = renderSectorAccessWarning(2);
+      const portrait = meta.loaded && !meta.isEnemy
+        ? renderGovernorPortrait(sector2State, meta.leaderName)
+        : `
+          <div class="sector-card-portrait">
+            <img src="captain-blackhoof.png" alt="" />
+          </div>
+        `;
       return `
         <article class="sector-card sector-card--ocean">
           <div class="sector-card-main">
@@ -3276,9 +3558,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
                 <div class="sector-control-fill" style="width:${meta.control}%"></div>
               </div>
             </div>
-            <div class="sector-card-portrait">
-              <img src="captain-blackhoof.png" alt="" />
-            </div>
+            ${portrait}
           </div>
           <div class="sector-card-body">
             ${accessWarning || (!meta.loaded ? `
@@ -3657,7 +3937,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
               </div>
             </div>
             <div class="sector-card-portrait">
-              <img src="immortal-bo.png" alt="" />
+              <img src="${meta.isEnemy ? "immortal-bo.png" : "heim-head.png"}" alt="" />
             </div>
           </div>
           <div class="sector-card-body">
@@ -3723,12 +4003,22 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       const meta = getSectorDisplayMeta(state);
       const showOperations = meta.loaded && meta.control < 100;
       const vulnerable = meta.isEnemy && meta.control === 0;
-      const accessWarning = region.number === 2 && meta.fullEnemyControl
+      const accessWarning = region.number === 2
         ? renderSectorAccessWarning(2)
         : "";
-      const portrait = region.number === 1
-        ? "immortal-bo.png"
-        : "captain-blackhoof.png";
+      const portraitMarkup = region.number === 1
+        ? `
+          <div class="sector-card-portrait">
+            <img src="${meta.isEnemy ? "immortal-bo.png" : "heim-head.png"}" alt="" />
+          </div>
+        `
+        : region.number === 2 && meta.loaded && !meta.isEnemy
+          ? renderGovernorPortrait(state, meta.leaderName)
+          : `
+            <div class="sector-card-portrait">
+              <img src="captain-blackhoof.png" alt="" />
+            </div>
+          `;
       const cardClasses = ["sector-card"];
       if (region.number === 2) cardClasses.push("sector-card--ocean");
 
@@ -3758,9 +4048,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
                 <div class="sector-control-fill" style="width:${meta.control}%"></div>
               </div>
             </div>
-            <div class="sector-card-portrait">
-              <img src="${portrait}" alt="" />
-            </div>
+            ${portraitMarkup}
           </div>
           ${accessWarning ? `
             <div class="sector-card-body">
@@ -3808,7 +4096,9 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
           if (expanded) itemClasses.push("is-expanded");
           if (state.liberated) itemClasses.push("is-liberated");
           const detailClasses = ["sector-drawer-detail"];
-          if (state.bossDefeated) detailClasses.push("is-boss-defeated");
+          if (state.bossDefeated && ![1, 2].includes(region.number)) {
+            detailClasses.push("is-boss-defeated");
+          }
 
           return `
             <section class="${itemClasses.join(" ")}">
@@ -5090,6 +5380,81 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
       camera.position.set(0, 0, DEFAULT_CAMERA_Z);
 
+      const spaceBackdropMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+          time: { value: 0 }
+        },
+        vertexShader: `
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          precision highp float;
+          varying vec2 vUv;
+          uniform float time;
+
+          float hash(vec2 p) {
+            return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+          }
+
+          float noise(vec2 p) {
+            vec2 i = floor(p);
+            vec2 f = fract(p);
+            f = f * f * (3.0 - 2.0 * f);
+            return mix(
+              mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
+              mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x),
+              f.y
+            );
+          }
+
+          float fbm(vec2 p) {
+            float value = 0.0;
+            float amplitude = 0.5;
+            mat2 rotation = mat2(0.82, -0.57, 0.57, 0.82);
+            for (int i = 0; i < 5; i++) {
+              value += amplitude * noise(p);
+              p = rotation * p * 2.04 + 13.7;
+              amplitude *= 0.5;
+            }
+            return value;
+          }
+
+          void main() {
+            vec2 p = (vUv - 0.5) * vec2(3.2, 1.8);
+            float drift = time * 0.035;
+            float cloudA = fbm(p * 1.45 + vec2(drift, -drift * 0.36));
+            float cloudB = fbm(p * 2.35 + vec2(-drift * 0.58, drift * 0.27) + 9.2);
+            float waveA = p.y + sin(p.x * 1.35 + drift * 1.8) * 0.20 + (cloudA - 0.5) * 0.42;
+            float waveB = p.y * 0.88 - sin(p.x * 1.08 - drift * 1.2) * 0.24 + (cloudB - 0.5) * 0.36;
+            float violetBand = exp(-abs(waveA + 0.30) * 4.8) * (0.32 + cloudA * 0.68);
+            float tealBand = exp(-abs(waveB - 0.38) * 5.6) * (0.26 + cloudB * 0.74);
+            float emberThread = exp(-abs(waveA - 0.72) * 9.0) * cloudB * 0.34;
+            float dust = pow(max(0.0, fbm(p * 4.6 - vec2(drift * 0.7, 0.0)) - 0.56), 2.0);
+
+            vec3 color = vec3(0.002, 0.004, 0.016);
+            color += vec3(0.095, 0.030, 0.22) * violetBand;
+            color += vec3(0.010, 0.13, 0.17) * tealBand;
+            color += vec3(0.22, 0.035, 0.025) * emberThread;
+            color += vec3(0.18, 0.13, 0.30) * dust * 0.34;
+            color *= 0.86 + noise(p * 7.0 + drift) * 0.14;
+            gl_FragColor = vec4(color, 1.0);
+          }
+        `,
+        depthTest: false,
+        depthWrite: false
+      });
+      const spaceBackdrop = new THREE.Mesh(
+        new THREE.PlaneGeometry(64, 36),
+        spaceBackdropMaterial
+      );
+      spaceBackdrop.position.z = -14;
+      spaceBackdrop.renderOrder = -100;
+      scene.add(spaceBackdrop);
+
       const earthTexture = new THREE.TextureLoader().load(EARTH_TEXTURE_SRC);
       earthTexture.wrapS = THREE.RepeatWrapping;
       earthTexture.wrapT = THREE.ClampToEdgeWrapping;
@@ -5098,12 +5463,37 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       earthTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
       earthTexture.colorSpace = THREE.SRGBColorSpace;
 
+      const globeMaterial = new THREE.MeshBasicMaterial({
+        map: earthTexture,
+        color: new THREE.Color(0xffffff)
+      });
+      globeMaterial.onBeforeCompile = (shader) => {
+        shader.fragmentShader = shader.fragmentShader.replace(
+          "#include <map_fragment>",
+          `
+            #include <map_fragment>
+            float mapLuminance = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+            float blueOverRed = diffuseColor.b - diffuseColor.r;
+            float blueOverGreen = diffuseColor.b - diffuseColor.g;
+            float oceanMask =
+              smoothstep(0.055, 0.19, blueOverRed) *
+              smoothstep(-0.025, 0.095, blueOverGreen) *
+              (1.0 - smoothstep(0.70, 0.91, mapLuminance));
+            vec3 deeperOcean =
+              diffuseColor.rgb * vec3(0.47, 0.59, 0.72) +
+              vec3(0.0, 0.004, 0.018);
+            diffuseColor.rgb = mix(
+              diffuseColor.rgb,
+              deeperOcean,
+              oceanMask * 0.76
+            );
+          `
+        );
+      };
+
       globe = new THREE.Mesh(
         new THREE.SphereGeometry(1, 128, 128),
-        new THREE.MeshBasicMaterial({
-          map: earthTexture,
-          color: new THREE.Color(0xffffff)
-        })
+        globeMaterial
       );
       scene.add(globe);
 
@@ -5174,6 +5564,46 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
         })
       );
       scene.add(stars);
+
+      const parallaxStarGeometry = new THREE.BufferGeometry();
+      const parallaxStarPositions = [];
+      const parallaxStarColors = [];
+      for (let i = 0; i < 300; i += 1) {
+        parallaxStarPositions.push(
+          (Math.random() - 0.5) * 18,
+          (Math.random() - 0.5) * 10,
+          -3.5 - Math.random() * 7
+        );
+        const colorRoll = Math.random();
+        if (colorRoll > 0.88) {
+          parallaxStarColors.push(0.82, 0.48, 1.0);
+        } else if (colorRoll > 0.70) {
+          parallaxStarColors.push(0.35, 0.88, 1.0);
+        } else {
+          parallaxStarColors.push(0.88, 0.94, 1.0);
+        }
+      }
+      parallaxStarGeometry.setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute(parallaxStarPositions, 3)
+      );
+      parallaxStarGeometry.setAttribute(
+        "color",
+        new THREE.Float32BufferAttribute(parallaxStarColors, 3)
+      );
+      const parallaxStarMaterial = new THREE.PointsMaterial({
+        size: 0.032,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.46,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      });
+      const parallaxStars = new THREE.Points(
+        parallaxStarGeometry,
+        parallaxStarMaterial
+      );
+      scene.add(parallaxStars);
 
       const portalGroup = new THREE.Group();
       const PORTAL_BASE_SCALE = 0.82;
@@ -5463,11 +5893,6 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
               regionMesh.userData.border.scale.setScalar(1.01);
             }
           }
-          if (document.body.classList.contains("sectors-open")) {
-            tooltip.style.display = "none";
-            canvas.style.cursor = "pointer";
-            return;
-          }
           const hasDetailedSectorCard = (
             region.id === "sector-desert" ||
             region.id === "sector-ocean" ||
@@ -5500,12 +5925,15 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
           tooltip.innerHTML = renderRegionTooltip(region);
           const tooltipRect = tooltip.getBoundingClientRect();
           const margin = 14;
-          const useRightDock = window.innerWidth >= 900;
+          const useSideDock = window.innerWidth >= 900;
+          const sectorsPanelOpen = document.body.classList.contains("sectors-open");
           let tooltipLeft;
           let tooltipTop;
-          if (useRightDock) {
-            const rightGutter = Math.max(26, Math.min(54, window.innerWidth * 0.032));
-            tooltipLeft = window.innerWidth - tooltipRect.width - rightGutter;
+          if (useSideDock) {
+            const sideGutter = Math.max(26, Math.min(54, window.innerWidth * 0.032));
+            tooltipLeft = sectorsPanelOpen
+              ? sideGutter
+              : window.innerWidth - tooltipRect.width - sideGutter;
             tooltipTop = (window.innerHeight - tooltipRect.height) / 2;
           } else {
             tooltipLeft = event.clientX + 16;
@@ -5566,6 +5994,11 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
         regionGroup.rotation.x = globeSpinState.x;
         regionGroup.rotation.y = globeSpinState.y;
         stars.rotation.y += 0.0002;
+        parallaxStars.rotation.y -= 0.00011;
+        parallaxStars.rotation.z = Math.sin(tick * 0.045) * 0.018;
+        parallaxStarMaterial.opacity =
+          0.40 + Math.sin(tick * 0.32) * 0.045;
+        spaceBackdropMaterial.uniforms.time.value = tick;
 
         const portalBreath =
           1 +
