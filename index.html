@@ -356,54 +356,98 @@
       line-height: 1.45;
     }
 
-    .sector-command-guide-title {
-      margin-top: 12px;
-      color: #ff9ca4;
-      font-size: 10px;
-      font-weight: 900;
-      letter-spacing: 0.09em;
-      text-transform: uppercase;
-    }
-
     .sector-command-guide-list {
       display: grid;
       grid-template-columns: minmax(0, 1fr);
       gap: 4px;
-      margin-top: 7px;
+      padding: 6px;
+    }
+
+    .universal-command-drawer {
+      margin-top: 10px;
+      border: 1px solid rgba(177, 112, 255, 0.48);
+      border-radius: 5px;
+      background: rgba(67, 25, 104, 0.44);
+      overflow: hidden;
+    }
+
+    .universal-command-drawer.is-open {
+      border-color: rgba(196, 139, 255, 0.72);
+      background: rgba(76, 29, 116, 0.58);
+    }
+
+    .universal-command-master-toggle {
+      display: grid;
+      width: 100%;
+      min-height: 40px;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 8px;
+      border: 0;
+      padding: 9px 10px;
+      background:
+        linear-gradient(100deg, rgba(132, 62, 198, 0.28), transparent 72%);
+      color: #ead9ff;
+      cursor: pointer;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 1000;
+      text-align: left;
+      text-transform: uppercase;
+    }
+
+    .universal-command-master-toggle:hover {
+      background: rgba(147, 73, 214, 0.24);
+      color: #fff;
+    }
+
+    .universal-command-body {
+      max-height: min(48vh, 430px);
+      border-top: 1px solid rgba(211, 174, 255, 0.16);
+      overflow-y: auto;
+    }
+
+    .universal-command-body::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .universal-command-body::-webkit-scrollbar-thumb {
+      border-radius: 3px;
+      background: rgba(140, 221, 151, 0.44);
     }
 
     .universal-command-item {
-      border: 1px solid rgba(255, 108, 119, 0.31);
+      border: 1px solid rgba(91, 215, 111, 0.34);
       border-radius: 4px;
-      background: rgba(255, 68, 83, 0.09);
+      background: rgba(23, 95, 42, 0.24);
       overflow: hidden;
     }
 
     .universal-command-item.is-expanded {
-      border-color: rgba(255, 132, 141, 0.62);
-      background: rgba(255, 68, 83, 0.15);
+      border-color: rgba(112, 235, 131, 0.68);
+      background: rgba(28, 113, 49, 0.37);
     }
 
     .universal-command-toggle {
       display: grid;
       width: 100%;
-      min-height: 38px;
+      min-height: 34px;
       grid-template-columns: minmax(0, 1fr) auto;
       align-items: center;
       gap: 8px;
       border: 0;
-      padding: 8px 9px;
+      padding: 7px 9px;
       background: transparent;
-      color: rgba(255, 244, 245, 0.88);
+      color: rgba(225, 255, 229, 0.90);
       cursor: pointer;
       font-family: inherit;
-      font-size: 13px;
+      font-size: 11px;
       font-weight: 900;
       text-align: left;
     }
 
     .universal-command-toggle:hover {
-      background: rgba(255, 91, 104, 0.12);
+      background: rgba(90, 225, 111, 0.12);
       color: #fff;
     }
 
@@ -421,12 +465,16 @@
       transform: rotate(225deg);
     }
 
+    .universal-command-drawer.is-open > .universal-command-master-toggle .universal-command-chevron {
+      transform: rotate(225deg);
+    }
+
     .universal-command-description {
       border-top: 1px solid rgba(255, 255, 255, 0.09);
-      padding: 8px 9px 9px;
-      color: rgba(255, 237, 239, 0.74);
-      font-size: 10px;
-      line-height: 1.45;
+      padding: 9px 10px 10px;
+      color: rgba(239, 255, 241, 0.84);
+      font-size: 11.5px;
+      line-height: 1.5;
     }
 
     #sectors-list {
@@ -543,6 +591,17 @@
       padding: 11px;
     }
 
+    .sector-command-detail-top {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 78px;
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .sector-command-detail-copy {
+      min-width: 0;
+    }
+
     .sector-command-detail-heading {
       display: grid;
       grid-template-columns: auto minmax(0, 1fr);
@@ -564,6 +623,103 @@
       font-size: 14px;
       font-weight: 900;
       line-height: 1.2;
+    }
+
+    .sector-command-detail-meta {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 7px;
+      margin-top: 9px;
+    }
+
+    .sector-command-detail-meta-item {
+      min-width: 0;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 4px;
+      padding: 7px;
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .sector-command-detail-meta-item .sector-command-detail-label,
+    .sector-command-detail-meta-item .sector-command-detail-value {
+      display: block;
+      text-align: left;
+    }
+
+    .sector-command-detail-meta-item .sector-command-detail-value {
+      margin-top: 4px;
+      overflow: hidden;
+      font-size: 10px;
+      line-height: 1.25;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .sector-command-detail-portrait {
+      position: relative;
+      min-height: 98px;
+      border: 1px solid rgba(255, 101, 113, 0.32);
+      border-radius: 4px;
+      background:
+        radial-gradient(circle at 50% 34%, rgba(164, 68, 82, 0.22), transparent 58%),
+        #090506;
+      overflow: hidden;
+    }
+
+    .sector-command-detail-portrait img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 50% 20%;
+    }
+
+    .sector-command-detail-portrait img.hog-twin-west {
+      object-position: 24% 28%;
+    }
+
+    .sector-command-detail-portrait img.hog-twin-east {
+      object-position: 76% 28%;
+    }
+
+    .sector-command-detail-portrait.is-capital img {
+      object-position: 50% 50%;
+    }
+
+    .sector-command-detail-portrait.is-governor {
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 50% 35%, rgba(128, 97, 235, 0.25), transparent 60%),
+        #09070d;
+    }
+
+    .sector-command-detail-portrait.is-governor > * {
+      grid-area: 1 / 1;
+    }
+
+    .sector-command-detail-portrait .sector-governor-fallback {
+      width: 100%;
+      min-width: 0;
+      padding: 6px;
+    }
+
+    .sector-command-detail-portrait .sector-governor-initials {
+      font-size: 25px;
+    }
+
+    .sector-command-detail-classified {
+      display: grid;
+      height: 100%;
+      place-items: center;
+      padding: 8px;
+      background:
+        linear-gradient(135deg, rgba(132, 0, 11, 0.92), rgba(61, 0, 7, 0.96));
+      color: #fff;
+      font-size: 8px;
+      font-weight: 1000;
+      line-height: 1.35;
+      text-align: center;
+      text-transform: uppercase;
     }
 
     .sector-command-detail-row {
@@ -590,24 +746,33 @@
     }
 
     .sector-command-detail-commands {
-      padding-top: 10px;
+      margin-top: 11px;
+      border-top: 1px solid rgba(255, 255, 255, 0.10);
+      padding-top: 11px;
+    }
+
+    .sector-command-detail-commands > .sector-command-detail-label {
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 10px;
     }
 
     .sector-command-detail-command-list {
       display: flex;
       flex-wrap: wrap;
-      gap: 5px;
-      margin-top: 7px;
+      gap: 7px;
+      margin-top: 9px;
     }
 
     .sector-command-detail-command {
       border: 1px solid rgba(255, 101, 113, 0.35);
-      border-radius: 3px;
-      padding: 4px 6px;
-      background: rgba(255, 67, 82, 0.11);
+      border-radius: 4px;
+      padding: 7px 9px;
+      background: rgba(255, 67, 82, 0.15);
       color: #fff;
-      font-size: 9px;
-      font-weight: 900;
+      font-size: 12px;
+      font-weight: 1000;
+      line-height: 1.1;
+      box-shadow: inset 0 0 10px rgba(255, 63, 78, 0.04);
     }
 
     .sector-command-detail-notice {
@@ -2592,8 +2757,7 @@
     </div>
     <div class="sector-command-guide">
       <p class="sector-command-guide-copy">Click through the sectors below to see what commands are available.</p>
-      <div class="sector-command-guide-title">Universal Commands</div>
-      <div class="sector-command-guide-list" id="universal-command-list" aria-label="Universal commands"></div>
+      <div id="universal-command-drawer" aria-label="Universal commands"></div>
     </div>
     <div id="sectors-list"></div>
   </aside>
@@ -3145,6 +3309,7 @@
 
     let currentTab = null;
     let expandedSectorNumber = null;
+    let universalCommandsOpen = false;
     let expandedUniversalCommand = null;
     let currentLoreTab = "world";
     let selectedLoc = null;
@@ -4307,20 +4472,28 @@
       const isHeimClaim = region.number === 1 && panel.liberated;
       const leaderLabel = display.isEnemy ? "Sector Boss" : "Sector Gov";
       const leaderName = isHeimClaim ? "Heimidinger" : display.leaderName;
+      const portrait = renderSectorDrawerPortrait(region, state, display, panel);
 
       return `
         <div class="sector-command-detail">
-          <div class="sector-command-detail-heading">
-            <span class="sector-command-detail-number">Sector ${region.number}</span>
-            <span class="sector-command-detail-name">${escapeHtml(region.name)}</span>
-          </div>
-          <div class="sector-command-detail-row">
-            <span class="sector-command-detail-label">${escapeHtml(panel.controlLabel)}</span>
-            <span class="sector-command-detail-value">${panel.control}%</span>
-          </div>
-          <div class="sector-command-detail-row">
-            <span class="sector-command-detail-label">${escapeHtml(isHeimClaim ? "Claimed By" : leaderLabel)}</span>
-            <span class="sector-command-detail-value">${escapeHtml(leaderName)}</span>
+          <div class="sector-command-detail-top">
+            <div class="sector-command-detail-copy">
+              <div class="sector-command-detail-heading">
+                <span class="sector-command-detail-number">Sector ${region.number}</span>
+                <span class="sector-command-detail-name">${escapeHtml(region.name)}</span>
+              </div>
+              <div class="sector-command-detail-meta">
+                <div class="sector-command-detail-meta-item">
+                  <span class="sector-command-detail-label">${escapeHtml(isHeimClaim ? "Claimed By" : leaderLabel)}</span>
+                  <span class="sector-command-detail-value">${escapeHtml(leaderName)}</span>
+                </div>
+                <div class="sector-command-detail-meta-item">
+                  <span class="sector-command-detail-label">${escapeHtml(panel.controlLabel)}</span>
+                  <span class="sector-command-detail-value">${panel.control}%</span>
+                </div>
+              </div>
+            </div>
+            ${portrait}
           </div>
           <div class="sector-command-detail-commands">
             <div class="sector-command-detail-label">Commands</div>
@@ -4339,29 +4512,101 @@
       `;
     }
 
-    function renderUniversalCommands() {
-      const list = document.getElementById("universal-command-list");
-      if (!list) return;
+    function renderSectorDrawerPortrait(region, state, display, panel) {
+      if (panel.liberated) {
+        if (region.number === 1) {
+          return `
+            <div class="sector-command-detail-portrait">
+              <img src="heim-head.png" alt="Heimidinger" />
+            </div>
+          `;
+        }
 
-      list.innerHTML = universalCommands.map((item) => {
-        const expanded = expandedUniversalCommand === item.command;
+        const governor = getGovernorPortraitDetails(state, display.leaderName);
         return `
-          <section class="universal-command-item${expanded ? " is-expanded" : ""}">
-            <button
-              class="universal-command-toggle"
-              type="button"
-              data-universal-command="${escapeHtml(item.command)}"
-              aria-expanded="${expanded ? "true" : "false"}"
-            >
-              <span>${escapeHtml(item.command)}</span>
-              <span class="universal-command-chevron" aria-hidden="true"></span>
-            </button>
-            ${expanded ? `
-              <div class="universal-command-description">${escapeHtml(item.description)}</div>
+          <div class="sector-command-detail-portrait is-governor">
+            <div class="sector-governor-fallback" aria-hidden="true">
+              <span class="sector-governor-initials">${escapeHtml(governor.initials)}</span>
+              <small>${escapeHtml(governor.name)}</small>
+            </div>
+            ${governor.imageUrl ? `
+              <img src="${escapeHtml(governor.imageUrl)}" alt="${escapeHtml(governor.name)}" />
             ` : ""}
-          </section>
+          </div>
         `;
-      }).join("");
+      }
+
+      if (region.number === 3) {
+        return `
+          <div class="sector-command-detail-portrait">
+            <div class="sector-command-detail-classified">No image found<br>Top secret</div>
+          </div>
+        `;
+      }
+
+      const bossPortraits = {
+        1: { src: "immortal-bo.png", alt: "Immortal Bo", className: "" },
+        2: { src: "captain-blackhoof.png", alt: "Captain BlackHoof", className: "" },
+        4: { src: "mechacow.png", alt: "MechaCow", className: "" },
+        5: { src: "pyscow.png", alt: "PysCow", className: "" },
+        6: { src: "3horn-green.png", alt: "3Horn Green", className: "" },
+        7: { src: "figuregolem.png", alt: "Figuregolem", className: "" },
+        8: { src: "hog-twins.png", alt: "Hog Twin Blue", className: "hog-twin-west" },
+        9: { src: "hog-twins.png", alt: "Hog Twin Purple", className: "hog-twin-east" },
+        10: { src: "cowcorp-ceo.png", alt: "CowCorp CEO", className: "" }
+      };
+      const boss = bossPortraits[region.number];
+      if (!boss) return "";
+
+      return `
+        <div class="sector-command-detail-portrait${region.number === 10 ? " is-capital" : ""}">
+          <img class="${boss.className}" src="${boss.src}" alt="${boss.alt}" />
+        </div>
+      `;
+    }
+
+    function renderUniversalCommands() {
+      const drawer = document.getElementById("universal-command-drawer");
+      if (!drawer) return;
+
+      drawer.innerHTML = `
+        <section class="universal-command-drawer${universalCommandsOpen ? " is-open" : ""}">
+          <button
+            class="universal-command-master-toggle"
+            type="button"
+            data-universal-drawer-toggle
+            aria-expanded="${universalCommandsOpen ? "true" : "false"}"
+          >
+            <span>Universal Commands</span>
+            <span class="universal-command-chevron" aria-hidden="true"></span>
+          </button>
+          ${universalCommandsOpen ? `
+            <div class="universal-command-body">
+              <div class="sector-command-guide-list">
+                ${universalCommands.map((item) => {
+                  const expanded = expandedUniversalCommand === item.command;
+                  return `
+                    <section class="universal-command-item${expanded ? " is-expanded" : ""}">
+                      <button
+                        class="universal-command-toggle"
+                        type="button"
+                        data-universal-command="${escapeHtml(item.command)}"
+                        aria-expanded="${expanded ? "true" : "false"}"
+                      >
+                        <span>${escapeHtml(item.command)}</span>
+                        <span class="universal-command-chevron" aria-hidden="true"></span>
+                      </button>
+                      ${expanded ? `
+                        <div class="universal-command-description">${escapeHtml(item.description)}</div>
+                      ` : ""}
+                    </section>
+                  `;
+                }).join("")}
+              </div>
+            </div>
+          ` : ""}
+        </section>
+      `;
     }
 
     function renderSectorsPanel() {
@@ -5822,6 +6067,19 @@
       );
       scene.add(glow);
 
+      const starCanvas = document.createElement("canvas");
+      starCanvas.width = 64;
+      starCanvas.height = 64;
+      const starContext = starCanvas.getContext("2d");
+      const starGradient = starContext.createRadialGradient(32, 32, 0, 32, 32, 31);
+      starGradient.addColorStop(0, "rgba(255,255,255,1)");
+      starGradient.addColorStop(0.22, "rgba(255,255,255,0.96)");
+      starGradient.addColorStop(0.55, "rgba(255,255,255,0.34)");
+      starGradient.addColorStop(1, "rgba(255,255,255,0)");
+      starContext.fillStyle = starGradient;
+      starContext.fillRect(0, 0, 64, 64);
+      const starTexture = new THREE.CanvasTexture(starCanvas);
+
       const starGeometry = new THREE.BufferGeometry();
       const starPositions = [];
       const starColors = [];
@@ -5842,10 +6100,12 @@
       const stars = new THREE.Points(
         starGeometry,
         new THREE.PointsMaterial({
-          size: 0.026,
+          size: 0.020,
+          map: starTexture,
+          alphaTest: 0.025,
           vertexColors: true,
           transparent: true,
-          opacity: 0.74,
+          opacity: 0.68,
           depthWrite: false
         })
       );
@@ -5878,10 +6138,12 @@
         new THREE.Float32BufferAttribute(parallaxStarColors, 3)
       );
       const parallaxStarMaterial = new THREE.PointsMaterial({
-        size: 0.032,
+        size: 0.021,
+        map: starTexture,
+        alphaTest: 0.025,
         vertexColors: true,
         transparent: true,
-        opacity: 0.46,
+        opacity: 0.40,
         depthWrite: false,
         blending: THREE.AdditiveBlending
       });
@@ -6357,6 +6619,12 @@
         closePanel();
         return;
       }
+      if (event.target.closest("[data-universal-drawer-toggle]")) {
+        universalCommandsOpen = !universalCommandsOpen;
+        if (!universalCommandsOpen) expandedUniversalCommand = null;
+        renderUniversalCommands();
+        return;
+      }
       const universalToggle = event.target.closest("[data-universal-command]");
       if (universalToggle) {
         const command = universalToggle.dataset.universalCommand;
@@ -6367,6 +6635,8 @@
       const toggle = event.target.closest("[data-sector-toggle]");
       if (!toggle) return;
       const sectorNumber = Number(toggle.dataset.sectorToggle);
+      universalCommandsOpen = false;
+      expandedUniversalCommand = null;
       expandedSectorNumber = expandedSectorNumber === sectorNumber ? null : sectorNumber;
       renderSectorsPanel();
     });
