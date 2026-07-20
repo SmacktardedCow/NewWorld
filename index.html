@@ -1038,6 +1038,28 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       display: block;
     }
 
+    #tab-lore.lore-preview-locked .lore-tabs,
+    #tab-lore.lore-preview-locked .lore-panel {
+      display: none;
+    }
+
+    .lore-coming-soon {
+      min-height: 260px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 18px;
+      border: 1px solid rgba(127, 119, 221, 0.4);
+      border-radius: 10px;
+      background: radial-gradient(circle at center, rgba(127, 119, 221, 0.16), transparent 68%), rgba(4, 6, 14, 0.62);
+      color: #fff;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-align: center;
+      text-shadow: 0 0 14px rgba(127, 119, 221, 0.8);
+    }
+
     .section-title {
       margin-bottom: 10px;
       padding-bottom: 7px;
@@ -1417,13 +1439,22 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
     .pc-close { position:absolute; top:13px; right:13px; z-index:30; width:22px; height:22px; border:1px solid var(--pc-accent); border-radius:3px; background:#080808; color:#fff; font-family:Arial,sans-serif; font-size:16px; cursor:pointer; line-height:18px; }
     .pc-close:hover { background:var(--pc-accent); }
     .pc-header,.pc-rules { background:linear-gradient(180deg,#171717,#080808); color:#fff; }
-    .pc-header { position:relative; z-index:1; display:flex; align-items:center; min-height:47px; padding:7px 92px 7px 12px; border:2px solid var(--pc-accent); clip-path:polygon(9px 0,100% 0,100% 100%,9px 100%,0 calc(100% - 9px),0 9px); box-shadow:inset 0 0 0 1px rgba(255,255,255,.08); }
+    .pc-header { position:relative; z-index:1; display:flex; align-items:center; min-height:47px; padding:7px 42px 7px 12px; border:2px solid var(--pc-accent); clip-path:polygon(9px 0,100% 0,100% 100%,9px 100%,0 calc(100% - 9px),0 9px); box-shadow:inset 0 0 0 1px rgba(255,255,255,.08); }
     .pc-username { min-width:0; flex:1; padding:2px 5px 3px; color:#fff; font-size:18px; line-height:1; letter-spacing:.035em; overflow-wrap:anywhere; }
-    .pc-governor-badge { position:absolute; top:14px; right:20px; z-index:25; display:none; width:65px; height:65px; align-items:center; justify-content:center; transform:rotate(45deg); border:3px solid var(--pc-accent); background:#050505; box-shadow:0 0 0 2px #222,0 5px 12px rgba(0,0,0,.65),0 0 16px var(--pc-glow),inset 0 0 0 1px #fff; }
+    .pc-governor-badge { position:absolute; top:38px; right:15px; z-index:25; display:none; width:104px; height:128px; flex-direction:column; align-items:center; justify-content:flex-start; pointer-events:none; filter:drop-shadow(0 5px 8px rgba(0,0,0,.8)) drop-shadow(0 0 8px var(--pc-glow)); }
     .pc-governor-badge.show { display:flex; }
-    .pc-governor-badge-inner { transform:rotate(-45deg); text-align:center; color:#fff; line-height:.92; text-shadow:0 0 8px var(--pc-accent); }
-    .pc-governor-badge-inner small { display:block; font-size:8px; letter-spacing:.05em; }
-    .pc-governor-badge-inner strong { display:block; margin-top:3px; color:var(--pc-accent-soft); font-size:23px; }
+    .pc-governor-title { position:relative; z-index:2; align-self:flex-start; transform:translateX(-8px); margin:0 0 3px; padding:4px 10px 3px; border:2px solid var(--pc-accent); background:#050505; color:#fff; font-size:11px; letter-spacing:.09em; line-height:1; text-shadow:0 0 7px var(--pc-accent); }
+    .pc-governor-emblem { width:100px; height:100px; overflow:visible; }
+    .pc-gov-outline { fill:#050505; stroke:var(--pc-accent); stroke-width:3; }
+    .pc-gov-segment { fill:rgba(12,12,12,.94); stroke:color-mix(in srgb,var(--pc-accent) 70%,#333); stroke-width:1.6; transition:fill .2s ease,filter .2s ease; }
+    .pc-gov-sector.is-active .pc-gov-segment { fill:color-mix(in srgb,var(--pc-accent) 68%,#0a0a0a); stroke:#fff; filter:drop-shadow(0 0 5px var(--pc-accent)); }
+    .pc-gov-sector text { fill:#777; font-family:Impact,Haettenschweiler,"Arial Narrow Bold",sans-serif; font-size:7px; letter-spacing:.01em; text-anchor:middle; dominant-baseline:middle; }
+    .pc-gov-sector.is-active text { fill:#fff; font-size:9px; text-shadow:0 0 5px #000; }
+    .pc-gov-single text { font-size:18px !important; }
+    .pc-gov-half text { font-size:13px !important; }
+    .pc-gov-quarter text { font-size:11px !important; }
+    .pc-gov-centre .pc-gov-segment { fill:#080808; stroke:var(--pc-accent-soft); stroke-width:2; }
+    .pc-gov-centre.is-active .pc-gov-segment { fill:color-mix(in srgb,var(--pc-accent) 78%,#050505); stroke:#fff; }
     .pc-deputy-badge { position:absolute; right:20px; bottom:18px; z-index:25; display:none; width:58px; height:58px; align-items:center; justify-content:center; transform:rotate(45deg); border:3px solid var(--pc-accent); background:#050505; box-shadow:0 0 0 2px #222,0 5px 12px rgba(0,0,0,.65),0 0 14px var(--pc-glow),inset 0 0 0 1px #fff; }
     .pc-deputy-badge.show { display:flex; }
     .pc-deputy-badge-inner { transform:rotate(-45deg); text-align:center; color:#fff; line-height:.92; text-shadow:0 0 7px var(--pc-accent); }
@@ -1458,7 +1489,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
     .pc-bio-text { margin:0 11px 9px; padding:7px 0 0; border-top:1px solid #3b3b3b; color:#d7d7d7; }
     .pc-flavour { padding:6px 11px 7px; border-top:1px solid #333; color:var(--pc-accent-soft); font-family:"Arial Narrow",Arial,sans-serif; font-size:8px; font-style:italic; letter-spacing:.08em; text-align:right; text-transform:uppercase; }
     @media(max-width:900px) { #playercard { left:14px; right:14px; bottom:14px; width:min(350px,calc(100vw - 28px)); max-height:calc(100vh - 28px); } }
-    @media(max-width:390px) { #playercard{padding:7px}.pc-header{padding-right:82px}.pc-governor-badge{width:58px;height:58px;right:18px}.pc-deputy-badge{width:52px;height:52px;right:17px;bottom:17px}.pc-stats{grid-template-columns:1fr}.pc-stat-line:nth-child(even){padding-left:9px} }
+    @media(max-width:390px) { #playercard{padding:7px}.pc-header{padding-right:42px}.pc-governor-badge{width:94px;height:118px;right:13px;top:38px}.pc-governor-emblem{width:90px;height:90px}.pc-deputy-badge{width:52px;height:52px;right:17px;bottom:17px}.pc-stats{grid-template-columns:1fr}.pc-stat-line:nth-child(even){padding-left:9px} }
     .cmd-name {
       color: var(--purple-soft);
       font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
@@ -2707,7 +2738,8 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
           <div id="panel-sub">Faction and citizen commands</div>
         </div>
         <div id="panel-body">
-          <section class="content-section" id="tab-lore">
+          <section class="content-section lore-preview-locked" id="tab-lore">
+            <div class="lore-coming-soon">LORE TAB COMING SOON...</div>
             <div class="lore-tabs" aria-label="Lore sections">
               <button class="lore-tab active" type="button" data-lore-tab="world">World</button>
               <button class="lore-tab" type="button" data-lore-tab="timeline">Timeline</button>
@@ -3396,6 +3428,8 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
     }
 
     function switchTab(tab) {
+      if (tab !== "citizens") closePlayerCard();
+
       if (tab === "live") {
         openLive();
         return;
@@ -3427,12 +3461,16 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       document.getElementById(`tab-${tab}`).classList.add("active");
       document.getElementById("panel-title").textContent = tabTitles[tab][0];
       document.getElementById("panel-sub").textContent = tabTitles[tab][1];
-      if (tab === "lore") switchLoreTab(currentLoreTab);
+      if (
+        tab === "lore" &&
+        !document.getElementById("tab-lore").classList.contains("lore-preview-locked")
+      ) switchLoreTab(currentLoreTab);
       if (tab === "citizens") renderCitizens();
       if (tab === "commands") renderCommands();
     }
 
     function closePanel() {
+      closePlayerCard();
       currentTab = null;
       document.body.classList.add("panel-closed");
       document.body.classList.remove("sectors-open");
@@ -3770,6 +3808,14 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
         state.miicbmFunds = Math.max(0, Number(data.miicbmFunds) || 0);
         state.hitsquadEnabled = normalizeEnabled(data.hitsquadEnabled) ? 1 : 0;
         activeEffectState.sector3Hitsquad = state.hitsquadEnabled;
+        if (!bossAlive) {
+          state.controlOwner = "liberated";
+          state.controlLabel = "Liberated Control";
+          state.displayedLeader = state.governor || "Unclaimed";
+          state.displayedLeaderRole = state.governor ? "Governor" : "Unclaimed";
+          state.bossStage = 0;
+          state.miicbmFunds = 0;
+        }
       }
       state.loaded = true;
 
@@ -3876,11 +3922,22 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       const isEnemy = loaded &&
         state.controlOwner !== "liberated" &&
         Number(state.bossAlive) === 1;
+      const sector3BossDead = loaded &&
+        Number(state.sector) === 3 &&
+        Number(state.bossAlive) === 0;
       const leaderName = loaded
-        ? String(state.displayedLeader || (isEnemy ? state.bossName : "Unclaimed"))
+        ? String(
+            sector3BossDead
+              ? state.governor || "Unclaimed"
+              : state.displayedLeader || (isEnemy ? state.bossName : state.governor || "Unclaimed")
+          )
         : "Synchronizing";
       const leaderLabel = loaded
-        ? String(state.displayedLeaderRole || (isEnemy ? "Boss" : "Governor"))
+        ? String(
+            sector3BossDead
+              ? state.governor ? "Governor" : "Unclaimed"
+              : state.displayedLeaderRole || (isEnemy ? "Boss" : "Governor")
+          )
         : "Leader";
 
       let statusLabel = "SYNCING";
@@ -4092,6 +4149,8 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
     }
 
     function getSector3ObjectiveMeta(state = sector3State) {
+      if (Number(state?.bossAlive) !== 1) return null;
+
       const bossStage = Math.max(0, Number(state?.bossStage) || 0);
       const intel = Math.max(0, Number(state?.intel) || 0);
 
@@ -4119,8 +4178,12 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
     function renderJungleTooltip(region) {
       const meta = getSectorDisplayMeta(sector3State);
       const control = meta.control;
-      const statusLabel = meta.fullEnemyControl ? "FULL CONTROL" : "CONTESTED";
-      const statusColor = meta.fullEnemyControl ? "#ff4a59" : "#76e481";
+      const statusLabel = !meta.isEnemy
+        ? "LIBERATED"
+        : meta.fullEnemyControl
+          ? "FULL CONTROL"
+          : "CONTESTED";
+      const statusColor = meta.isEnemy && meta.fullEnemyControl ? "#ff4a59" : "#76e481";
       const objective = getSector3ObjectiveMeta();
       const accessWarning = renderSectorAccessWarning(3);
       const commandInfo = getSectorPanelCommands(region);
@@ -4132,13 +4195,17 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
               <div class="sector-card-title">${escapeHtml(region.name)}</div>
               <div class="sector-card-stats">
                 <div class="sector-card-stat">
-                  <span class="sector-card-stat-label">Boss</span>
-                  <span class="sector-card-stat-value">${escapeHtml(sector3State.bossName)}</span>
+                  <span class="sector-card-stat-label">${escapeHtml(meta.leaderLabel)}</span>
+                  <span class="sector-card-stat-value">${escapeHtml(meta.leaderName)}</span>
                 </div>
-                <div class="sector-card-stat">
+                ${objective ? `<div class="sector-card-stat">
                   <span class="sector-card-stat-label">${escapeHtml(objective.label)}</span>
                   <span class="sector-card-stat-value">${escapeHtml(objective.value)}</span>
-                </div>
+                </div>` : ""}
+                ${!meta.isEnemy ? `<div class="sector-card-stat">
+                  <span class="sector-card-stat-label">Liberated Control</span>
+                  <span class="sector-card-stat-value">${control}%</span>
+                </div>` : ""}
                 <div class="sector-card-stat">
                   <span class="sector-card-stat-label">Status</span>
                   <span class="sector-card-stat-value" style="color:${statusColor}">${statusLabel}</span>
@@ -4146,17 +4213,19 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
                 ${renderTroopsStat(3)}
               </div>
               <div class="sector-control-track" aria-hidden="true">
-                <div class="sector-control-fill" style="width:${objective.progress}%"></div>
+                <div class="sector-control-fill" style="width:${objective ? objective.progress : control}%"></div>
               </div>
             </div>
-            <div class="sector-card-portrait sector-classified-portrait" aria-label="Classified portrait unavailable">
+            ${meta.isEnemy ? `<div class="sector-card-portrait sector-classified-portrait" aria-label="Classified portrait unavailable">
               <div class="sector-classified-label">CLASSIFIED</div>
               <div class="sector-classified-missing">NO IMAGE<br>FOUND</div>
               <div class="sector-classified-stamp">TOP SECRET</div>
-            </div>
+            </div>` : renderGovernorPortrait(sector3State, meta.leaderName)}
           </div>
           <div class="sector-card-body">
-            <p class="sector-card-description">The Colonel has gone rogue in this sector, rallying troops and killing outsiders. You're authorized to take him out.</p>
+            <p class="sector-card-description">${meta.isEnemy
+              ? "The Colonel has gone rogue in this sector, rallying troops and killing outsiders. You're authorized to take him out."
+              : `${escapeHtml(meta.leaderName)} governs the liberated Jungle and commands its defenses.`}</p>
             ${accessWarning ? `<div style="margin-top:10px">${accessWarning}</div>` : ""}
             ${!accessWarning && commandInfo.notice ? `
               <div class="sector-vulnerable">${escapeHtml(commandInfo.notice)}</div>
@@ -4167,6 +4236,16 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
                 ${commandInfo.commands.map((command) => `
                   <span class="sector-tooltip-command">${escapeHtml(command)}</span>
                 `).join("")}
+              </div>
+            ` : ""}
+            ${!accessWarning && (commandInfo.governorCommands || []).length ? `
+              <div class="sector-card-command-group--governor">
+                <div class="sector-card-command-label">Governor Commands</div>
+                <div class="sector-tooltip-commands">
+                  ${commandInfo.governorCommands.map((command) => `
+                    <span class="sector-tooltip-command">${escapeHtml(command)}</span>
+                  `).join("")}
+                </div>
               </div>
             ` : ""}
           </div>
@@ -4429,7 +4508,100 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       `;
     }
 
+    function renderLiberatedSectorTooltip(region) {
+      const state = sectorStates[region.number];
+      const meta = getSectorDisplayMeta(state);
+      const themeClasses = {
+        2: "sector-card--ocean",
+        3: "sector-card--jungle",
+        4: "sector-card--north",
+        5: "sector-card--rift",
+        6: "sector-card--swamp",
+        7: "sector-card--basin",
+        8: "sector-card--plains",
+        9: "sector-card--plains",
+        10: "sector-card--capital"
+      };
+      const commandInfo = getSectorPanelCommands(region);
+      const commands = region.number === 1
+        ? ["!ambush", "!race"]
+        : [2, 3].includes(region.number)
+          ? [...(commandInfo.commands || [])]
+          : [];
+      const governorCommands = region.number === 1
+        ? []
+        : [...(commandInfo.governorCommands || [])];
+      if (region.number !== 1 && !governorCommands.some(
+        (command) => command.toLowerCase() === "!safehouse"
+      )) {
+        governorCommands.push("!safehouse");
+      }
+      const portrait = region.number === 1
+        ? `<div class="sector-card-portrait"><img src="heim-head.png" alt="Heimidinger" /></div>`
+        : renderGovernorPortrait(state, meta.leaderName);
+      const leaderLabel = region.number === 1 ? "Claimed By" : "Governor";
+
+      return `
+        <article class="sector-card ${themeClasses[region.number] || ""}">
+          <div class="sector-card-main">
+            <div class="sector-card-copy">
+              <div class="sector-card-kicker">Sector ${region.number}</div>
+              <div class="sector-card-title">${escapeHtml(region.name)}</div>
+              <div class="sector-card-stats">
+                <div class="sector-card-stat">
+                  <span class="sector-card-stat-label">${leaderLabel}</span>
+                  <span class="sector-card-stat-value">${escapeHtml(meta.leaderName)}</span>
+                </div>
+                <div class="sector-card-stat">
+                  <span class="sector-card-stat-label">Liberated Control</span>
+                  <span class="sector-card-stat-value">${meta.control}%</span>
+                </div>
+                <div class="sector-card-stat">
+                  <span class="sector-card-stat-label">Status</span>
+                  <span class="sector-card-stat-value" style="color:#76e481">LIBERATED</span>
+                </div>
+                ${renderTroopsStat(region.number)}
+              </div>
+              <div class="sector-control-track" aria-hidden="true">
+                <div class="sector-control-fill" style="width:${meta.control}%"></div>
+              </div>
+            </div>
+            ${portrait}
+          </div>
+          <div class="sector-card-body">
+            <p class="sector-card-description">${region.number === 1
+              ? "Heimidinger holds the liberated desert and commands its defenses."
+              : `${escapeHtml(meta.leaderName)} governs the liberated ${escapeHtml(region.name)} and commands its defenses.`}</p>
+            ${commands.length ? `
+              <div class="sector-card-command-label">Commands</div>
+              <div class="sector-tooltip-commands">
+                ${commands.map((command) => `<span class="sector-tooltip-command">${escapeHtml(command)}</span>`).join("")}
+              </div>
+            ` : ""}
+            ${governorCommands.length ? `
+              <div class="sector-card-command-group--governor">
+                <div class="sector-card-command-label">Governor Commands</div>
+                <div class="sector-tooltip-commands">
+                  ${governorCommands.map((command) => `<span class="sector-tooltip-command">${escapeHtml(command)}</span>`).join("")}
+                </div>
+              </div>
+            ` : ""}
+          </div>
+          ${region.number === 2 ? renderKrakenReleasedAlert(state) : ""}
+        </article>
+      `;
+    }
+
     function renderRegionTooltip(region) {
+      const liveState = sectorStates[region.number];
+      if (
+        liveState &&
+        liveState.loaded !== false &&
+        !getSectorDisplayMeta(liveState).isEnemy
+      ) {
+        return renderLiberatedSectorTooltip(region);
+      }
+
       if (region.id === "sector-ocean") {
         return renderOceanTooltip(region);
       }
@@ -4568,7 +4740,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
             <img src="${meta.isEnemy ? "immortal-bo.png" : "heim-head.png"}" alt="" />
           </div>
         `
-        : region.number === 2 && meta.loaded && !meta.isEnemy
+        : (region.number === 2 || region.number === 3) && meta.loaded && !meta.isEnemy
           ? renderGovernorPortrait(state, meta.leaderName)
           : `
             <div class="sector-card-portrait">
@@ -4603,7 +4775,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
                   <span class="sector-card-stat-label">${escapeHtml(meta.leaderLabel)}</span>
                   <span class="sector-card-stat-value">${escapeHtml(meta.leaderName)}</span>
                 </div>
-                ${region.number === 2 && !meta.isEnemy ? "" : renderObjectiveStat(region.number)}
+                ${(region.number === 2 || region.number === 3) && !meta.isEnemy ? "" : renderObjectiveStat(region.number)}
                 <div class="sector-card-stat">
                   <span class="sector-card-stat-label">Status</span>
                   <span class="sector-card-stat-value" style="color:${meta.statusColor}">${escapeHtml(meta.statusText)}</span>
@@ -4671,7 +4843,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       if (!meta.isEnemy) {
         return {
           commands: ["!TreasureHunt", "!harpoon"],
-          governorCommands: ["!ReleaseTheKraken", "!FishingTax", "!Plunder"],
+          governorCommands: ["!ReleaseTheKraken", "!FishingTax", "!Plunder", "!safehouse"],
           notice: ""
         };
       }
@@ -4728,7 +4900,11 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
         }
 
         if (!meta.isEnemy) {
-          return { commands: [], notice: "" };
+          return {
+            commands: ["!explore S3"],
+            governorCommands: ["!snipe", "!safehouse", "!hitsquad"],
+            notice: ""
+          };
         }
 
         const enemyControl = clampControl(state.enemyControl, meta.control);
@@ -4762,6 +4938,14 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
 
         return {
           commands: ["!raid Sector 3", "!raid Jungle"],
+          notice: ""
+        };
+      }
+
+      if (!meta.isEnemy) {
+        return {
+          commands: [],
+          governorCommands: ["!safehouse"],
           notice: ""
         };
       }
@@ -5070,13 +5254,132 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
     }
     function getPlayerGovernorSectors(stats, name) {
       const listed = Array.isArray(stats?.governorSectors)
-        ? stats.governorSectors.map(Number).filter((sector) => sector >= 1 && sector <= 10)
+        ? stats.governorSectors.map(Number).filter((sector) => sector >= 2 && sector <= 10)
         : [];
       const live = Object.values(sectorStates)
         .filter((state) => String(state?.governor || "").toLowerCase() === String(name || "").toLowerCase())
         .map((state) => Number(state.sector))
-        .filter(Boolean);
+        .filter((sector) => sector >= 2 && sector <= 10);
       return [...new Set([...listed, ...live])].sort((a, b) => a - b);
+    }
+
+    function renderGovernorSectorEmblem(governorSectors) {
+      const sectors = [...new Set(
+        governorSectors
+          .map(Number)
+          .filter((sector) => sector >= 2 && sector <= 10)
+      )].sort((a, b) => a - b);
+      const point = (radius, angleDegrees) => {
+        const radians = angleDegrees * Math.PI / 180;
+        return [
+          50 + Math.cos(radians) * radius,
+          50 + Math.sin(radians) * radius
+        ];
+      };
+      const formatPoint = ([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`;
+      const outerRadius = (angleDegrees) => {
+        const radians = angleDegrees * Math.PI / 180;
+        return 48 / (Math.abs(Math.cos(radians)) + Math.abs(Math.sin(radians)));
+      };
+      const segment = (sector, polygon, x, y, className = "") => `
+        <g class="pc-gov-sector is-active ${className}">
+          <polygon class="pc-gov-segment" points="${polygon}"></polygon>
+          <text x="${x}" y="${y}">S${sector}</text>
+        </g>
+      `;
+      let sections = "";
+
+      if (sectors.length === 1) {
+        sections = segment(
+          sectors[0],
+          "50,1 99,50 50,99 1,50",
+          50,
+          50,
+          "pc-gov-single"
+        );
+      } else if (sectors.length === 2) {
+        sections = [
+          segment(sectors[0], "50,1 99,50 1,50", 50, 29, "pc-gov-half"),
+          segment(sectors[1], "1,50 99,50 50,99", 50, 72, "pc-gov-half")
+        ].join("");
+      } else if (sectors.length === 3) {
+        sections = [
+          segment(sectors[0], "50,1 99,50 1,50", 50, 28, "pc-gov-half"),
+          segment(sectors[1], "1,50 50,50 50,99", 34, 65, "pc-gov-quarter"),
+          segment(sectors[2], "50,50 99,50 50,99", 66, 65, "pc-gov-quarter")
+        ].join("");
+      } else if (sectors.length === 4) {
+        const quarters = [
+          ["50,1 50,50 1,50", 35, 35],
+          ["50,1 99,50 50,50", 65, 35],
+          ["50,50 99,50 50,99", 65, 65],
+          ["1,50 50,50 50,99", 35, 65]
+        ];
+        sections = sectors.map((sector, index) => segment(
+          sector,
+          quarters[index][0],
+          quarters[index][1],
+          quarters[index][2],
+          "pc-gov-quarter"
+        )).join("");
+      } else if (sectors.length < 9) {
+        const slice = 360 / sectors.length;
+        sections = sectors.map((sector, index) => {
+          const middle = -90 + index * slice;
+          const start = middle - slice / 2;
+          const end = middle + slice / 2;
+          const polygon = [
+            [50, 50],
+            point(outerRadius(start), start),
+            point(outerRadius(middle), middle),
+            point(outerRadius(end), end)
+          ].map(formatPoint).join(" ");
+          const [labelX, labelY] = point(29, middle);
+          return segment(
+            sector,
+            polygon,
+            labelX.toFixed(2),
+            labelY.toFixed(2)
+          );
+        }).join("");
+      } else {
+        const outerSectors = sectors.filter((sector) => sector !== 10);
+        sections = outerSectors.map((sector, index) => {
+          const middle = -90 + index * 45;
+          const start = middle - 22.5;
+          const end = middle + 22.5;
+          const polygon = [
+            point(16, start),
+            point(outerRadius(start), start),
+            point(outerRadius(middle), middle),
+            point(outerRadius(end), end),
+            point(16, end)
+          ].map(formatPoint).join(" ");
+          const [labelX, labelY] = point(31, middle);
+          return segment(
+            sector,
+            polygon,
+            labelX.toFixed(2),
+            labelY.toFixed(2)
+          );
+        }).join("");
+        sections += `
+          <g class="pc-gov-sector pc-gov-centre is-active">
+            <circle class="pc-gov-segment" cx="50" cy="50" r="16"></circle>
+            <text x="50" y="50">S10</text>
+          </g>
+        `;
+      }
+
+      return `
+        <defs>
+          <clipPath id="pc-governor-diamond-clip">
+            <polygon points="50,1 99,50 50,99 1,50"></polygon>
+          </clipPath>
+        </defs>
+        <polygon class="pc-gov-outline" points="50,1 99,50 50,99 1,50"></polygon>
+        <g clip-path="url(#pc-governor-diamond-clip)">${sections}</g>
+      `;
     }
 
     function renderPlayerCardAvatar(stats, name) {
@@ -5125,7 +5428,14 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       card.classList.toggle("is-deputy", deputySector > 0);
       const badge = document.getElementById("pc-governor-badge");
       badge.classList.toggle("show", governorSectors.length > 0);
-      document.getElementById("pc-governor-sector").textContent = governorSectors.length ? `S${governorSectors.join(" / S")}` : "";
+      badge.setAttribute(
+        "aria-label",
+        governorSectors.length
+          ? `Governor of sectors ${governorSectors.join(", ")}`
+          : "Governor badge"
+      );
+      document.getElementById("pc-governor-emblem").innerHTML =
+        renderGovernorSectorEmblem(governorSectors);
       const deputyBadge = document.getElementById("pc-deputy-badge");
       deputyBadge.classList.toggle("show", deputySector > 0);
       document.getElementById("pc-deputy-sector").textContent = deputySector ? `S${deputySector}` : "";
@@ -7191,7 +7501,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
     <aside id="playercard" aria-label="New World citizen player card">
       <button class="pc-close" type="button" aria-label="Close">&times;</button>
       <div class="pc-header"><div class="pc-username" id="pc-username">Username</div></div>
-      <div class="pc-governor-badge" id="pc-governor-badge" aria-label="Governor badge"><div class="pc-governor-badge-inner"><small>GOVERNOR</small><strong id="pc-governor-sector"></strong></div></div>
+      <div class="pc-governor-badge" id="pc-governor-badge" aria-label="Governor badge"><div class="pc-governor-title">GOVERNOR</div><svg class="pc-governor-emblem" id="pc-governor-emblem" viewBox="0 0 100 100" aria-hidden="true"></svg></div>
       <div class="pc-deputy-badge" id="pc-deputy-badge" aria-label="Deputy badge"><div class="pc-deputy-badge-inner"><small>DEPUTY</small><strong id="pc-deputy-sector"></strong></div></div>
       <div class="pc-portrait" id="pc-portrait"></div>
       <div class="pc-inner-tabs">
