@@ -1,53 +1,53 @@
-using System;
+CITIZENSHIP / TWITCH FOLLOW DATE SETUP
+======================================
 
-public class CPHInline
-{
-    private const string CITIZENSHIP_VARIABLE =
-        "Main.Citizenship.Date";
+The website now reads this persisted Twitch user variable:
 
-    public bool Execute()
-    {
-        string login = "";
-        string followDate = "";
-        bool isFollowing = false;
+    Main.Citizenship.Date
 
-        CPH.TryGetArg("followUserName", out login);
-        CPH.TryGetArg("followDate", out followDate);
-        CPH.TryGetArg("isFollowing", out isFollowing);
+Streamer.bot's documented C# Twitch user-info object does not contain the
+date that a user followed. The date is supplied by Streamer.bot's
+"Get Follow Age Info for Target" sub-action instead.
 
-        if (string.IsNullOrWhiteSpace(login))
-            CPH.TryGetArg("userName", out login);
+SETUP
+-----
 
-        if (!isFollowing ||
-            string.IsNullOrWhiteSpace(login) ||
-            string.IsNullOrWhiteSpace(followDate))
-        {
-            CPH.LogWarn(
-                "Citizenship date not saved. The target either " +
-                "is not following, or the Get Follow Age Info " +
-                "sub-action did not return a date."
-            );
+1. Create a Streamer.bot action named:
 
-            return true;
-        }
+       Website - Capture Citizenship Date
 
-        login = login.Trim().ToLowerInvariant();
-        followDate = followDate.Trim();
+2. Add this sub-action first:
 
-        CPH.SetTwitchUserVar(
-            login,
-            CITIZENSHIP_VARIABLE,
-            followDate,
-            true
-        );
+       Twitch > Followers > Get Follow Age Info for Target
 
-        CPH.LogInfo(
-            "Citizenship date saved for " +
-            login +
-            ": " +
-            followDate
-        );
+   Choose the Twitch user whose date you want to save. When this action is
+   run from a Twitch trigger, the normal user/userName argument can be used
+   as the target.
 
-        return true;
-    }
-}
+3. Immediately after it, add a C# Execute Code sub-action and paste in:
+
+       citizenship-followdate-capture.cs
+
+4. Run the capture action for a user, then run the normal full website sync:
+
+       streamerbot-site-sync-CITIZENSHIP-HITSQUAD.cs
+
+The capture code saves Streamer.bot's returned followDate into the user's
+persisted Main.Citizenship.Date variable. The next site sync displays it on
+the card as "Citizenship Given".
+
+Until a date has been captured for a user, their card safely says:
+
+       Not recorded
+
+HITSQUAD TEST
+-------------
+
+Paste hitsquad-variable-test.cs into a temporary Execute C# action and run
+it. Streamer.bot's log will show:
+
+  - the persisted value
+  - the temporary value
+  - the result the website will use (ACTIVE or OFF)
+
+The full sync now accepts 1, true, active, or enabled, from either scope.
