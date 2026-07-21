@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Beyond the Rift</title>
+  <style>
+    :root { color-scheme: dark; --purple:#c64cff; --pink:#ff58dd; --cyan:#61e6ff; }
+    * { box-sizing:border-box; }
+    html,body { width:100%; height:100%; margin:0; overflow:hidden; background:#010006; }
+    body { font-family:Inter,Segoe UI,Arial,sans-serif; user-select:none; }
+    #rift-world {
+      position:fixed; inset:0; overflow:hidden; opacity:0;
+      background:
+        linear-gradient(rgba(6,0,20,.08),rgba(1,0,8,.16)),
+        url("rift-assets/rift-background.png") center/cover no-repeat;
+      transition:opacity 1.1s ease;
+    }
+    body.ready #rift-world { opacity:1; }
+    #rift-world::before {
+      content:""; position:absolute; inset:0; pointer-events:none;
+      background:radial-gradient(circle at 52% 54%,transparent 0 32%,rgba(0,0,8,.16) 70%,rgba(0,0,4,.58) 100%);
+      z-index:1;
+    }
+    #rift-world::after {
+      content:""; position:absolute; inset:0; pointer-events:none; z-index:8; opacity:.14;
+      background:repeating-linear-gradient(0deg,transparent 0 3px,rgba(255,255,255,.022) 3px 4px);
+      mix-blend-mode:screen;
+    }
+    #sparkles,#object-field { position:absolute; inset:0; overflow:hidden; }
+    #sparkles { z-index:2; pointer-events:none; }
+    #object-field { z-index:4; }
+    .spark {
+      position:absolute; width:2px; height:2px; border-radius:50%; background:#fff;
+      box-shadow:0 0 7px 2px #b34cff; opacity:.12; animation:twinkle var(--twinkle) ease-in-out infinite;
+    }
+    .spark.big { width:4px; height:4px; box-shadow:0 0 11px 4px #b95cff; }
+    @keyframes twinkle { 0%,100%{opacity:.08;transform:scale(.45)} 48%{opacity:.95;transform:scale(1.6)} }
+    .moving-object {
+      position:absolute; left:0; top:0; width:clamp(68px,7vw,102px); height:clamp(68px,7vw,102px);
+      margin:0; padding:0; border:0; outline:0; background:transparent; cursor:pointer;
+      transform-origin:center; will-change:transform; filter:drop-shadow(0 0 9px rgba(188,72,255,.48));
+    }
+    .moving-object:hover { filter:drop-shadow(0 0 14px rgba(239,179,255,.9)) brightness(1.16); }
+    .moving-object img { width:100%; height:100%; object-fit:contain; pointer-events:none; -webkit-user-drag:none; }
+    .moving-object svg { width:100%; height:100%; overflow:visible; pointer-events:none; }
+    .moving-object svg * { vector-effect:non-scaling-stroke; }
+    #return-map {
+      position:fixed; right:22px; top:20px; z-index:30; padding:11px 15px;
+      border:1px solid rgba(222,171,255,.62); color:#fff; background:rgba(8,2,19,.74);
+      box-shadow:0 0 24px rgba(163,58,235,.17),inset 0 0 18px rgba(160,67,220,.08);
+      font-size:10px; font-weight:1000; letter-spacing:.14em; text-decoration:none; text-transform:uppercase;
+      backdrop-filter:blur(8px); transition:border-color .2s,box-shadow .2s,background .2s;
+    }
+    #return-map:hover { border-color:#f0c9ff; background:rgba(39,8,61,.88); box-shadow:0 0 30px rgba(196,75,255,.35); }
+    #veil {
+      position:fixed; inset:0; z-index:60; display:grid; place-items:center; pointer-events:none;
+      opacity:1; background:#000; transition:opacity 1400ms cubic-bezier(.55,0,.2,1);
+    }
+    #veil.clear { opacity:0; }
+    #veil.active { opacity:1; pointer-events:auto; }
+    #veil-message {
+      max-width:min(1000px,90vw); color:#8424b3; opacity:0; filter:blur(15px);
+      transform:translateY(15px) scale(.9); text-align:center;
+      font-family:"Agency FB","Bahnschrift Condensed","Arial Narrow",Consolas,sans-serif;
+      font-size:clamp(24px,4vw,56px); font-weight:1000; font-stretch:condensed;
+      letter-spacing:.17em; line-height:1.15;
+      text-shadow:0 0 12px rgba(133,32,184,.9),0 0 42px rgba(77,13,122,.92);
+      transition:opacity 900ms ease,filter 1100ms ease,transform 1100ms cubic-bezier(.2,.7,.2,1);
+      text-transform:uppercase;
+    }
+    #veil.message #veil-message { opacity:1; filter:blur(0); transform:translateY(0) scale(1); }
+    #veil.message-out #veil-message { opacity:0; filter:blur(22px); transform:translateY(-8px) scale(1.13); }
+    #veil.command #veil-message {
+      max-width:96vw; color:#a431d2;
+      font-family:"Agency FB","Bahnschrift Condensed","Arial Narrow",Consolas,sans-serif;
+      font-size:clamp(58px,10vw,168px); font-weight:1000; font-stretch:condensed;
+      letter-spacing:.055em; line-height:.9; text-transform:none;
+      text-shadow:0 0 9px rgba(196,91,240,.7),0 0 34px rgba(130,31,183,.95),0 0 90px rgba(66,8,111,.98);
+    }
+    #finale {
+      position:fixed; inset:0; z-index:20; display:grid; place-content:center; justify-items:center;
+      gap:24px; padding:25px; opacity:0; visibility:hidden; pointer-events:none;
+      transition:opacity 1100ms ease,filter 1100ms ease,transform 1100ms ease;
+    }
+    #finale.show { opacity:1; visibility:visible; pointer-events:auto; }
+    #finale.departing { opacity:0; filter:blur(15px); transform:scale(.94); pointer-events:none; }
+    #finale h1 {
+      margin:0; color:#f5d9ff; font-size:clamp(25px,4.6vw,66px); line-height:1;
+      font-family:Georgia,"Times New Roman",serif; font-weight:900; letter-spacing:.18em;
+      text-align:center; text-transform:uppercase;
+      text-shadow:0 0 14px #c047ff,0 0 40px rgba(138,43,226,.8),0 0 80px rgba(100,25,180,.7);
+    }
+    .answers { display:grid; grid-template-columns:repeat(3,minmax(130px,210px)); gap:13px; width:min(720px,90vw); }
+    .answer {
+      border:1px solid rgba(222,155,255,.68); padding:14px 12px; color:#fff;
+      background:rgba(20,4,37,.75); box-shadow:inset 0 0 19px rgba(181,64,255,.08),0 0 20px rgba(98,25,156,.15);
+      font:1000 12px/1 Inter,Segoe UI,Arial,sans-serif; letter-spacing:.16em; cursor:pointer;
+      text-transform:uppercase; transition:transform .2s,border-color .2s,box-shadow .2s,background .2s;
+    }
+    .answer:hover,.answer.selected { transform:translateY(-2px); border-color:#fff; background:rgba(104,25,151,.75); box-shadow:0 0 28px rgba(203,82,255,.55),inset 0 0 24px rgba(255,255,255,.08); }
+    body.answered #finale h1 { animation:answerPulse 1.8s ease-in-out infinite; }
+    @keyframes answerPulse { 50%{text-shadow:0 0 20px #fff,0 0 58px #c047ff,0 0 110px #7822d1;} }
+    @media(max-width:650px){
+      #return-map{right:12px;top:12px;padding:10px 12px}
+      .answers{grid-template-columns:1fr;max-width:260px}
+      .moving-object{width:72px;height:72px}
+    }
+    @media(prefers-reduced-motion:reduce){.spark{animation:none}#rift-world,#veil,#finale{transition-duration:.01ms}}
+  </style>
+</head>
+<body>
+  <main id="rift-world" aria-label="The Rift">
+    <div id="sparkles" aria-hidden="true"></div>
+    <div id="object-field" aria-label="Moving Rift objects"></div>
+  </main>
+  <a id="return-map" href="index.html">Return to New World</a>
+  <section id="finale" aria-hidden="true">
+    <h1>WHEN THE SHROUD SPEAKS</h1>
+    <div class="answers">
+      <button class="answer" type="button">I LISTEN</button>
+      <button class="answer" type="button">I LISTEN</button>
+      <button class="answer" type="button">I LISTEN</button>
+    </div>
+  </section>
+  <div id="veil" aria-hidden="true"><div id="veil-message">WHEN THE SHROUD SPEAKS YOU LISTEN</div></div>
+  <script>
+    const ASSETS = {
+      chair: "rift-assets/neon-chair.png",
+      onion: "rift-assets/neon-onion.png",
+      milk: "rift-assets/neon-milk.png"
+    };
+    const STAGES = {
+      1: { target:"chair", shapes:16, speed:30 },
+      2: { target:"onion", shapes:23, speed:54 },
+      3: { target:"milk", shapes:31, speed:84 }
+    };
+    const SHAPES = ["circle","square","diamond","triangle","star","hex","cross","ring"];
+    const COLORS = ["#d75cff","#ff66dc","#8f76ff","#55dcff","#f5a6ff","#a83cff"];
+    const field = document.getElementById("object-field");
+    const veil = document.getElementById("veil");
+    const veilMessage = document.getElementById("veil-message");
+    const finale = document.getElementById("finale");
+    let movers = [];
+    let stage = 1;
+    let locked = true;
+    let lastFrame = performance.now();
+    let rafId = 0;
+    let finaleDeparting = false;
+
+    function random(min,max){ return min + Math.random() * (max-min); }
+    function makeSparkles(){
+      const layer = document.getElementById("sparkles");
+      for(let i=0;i<95;i+=1){
+        const spark=document.createElement("i");
+        spark.className=`spark${Math.random()>.84?" big":""}`;
+        spark.style.left=`${Math.random()*100}%`;
+        spark.style.top=`${Math.random()*100}%`;
+        spark.style.setProperty("--twinkle",`${random(2.2,6.8)}s`);
+        spark.style.animationDelay=`-${random(0,7)}s`;
+        layer.appendChild(spark);
+      }
+    }
+
+    function shapeSvg(type,color){
+      const common=`fill="rgba(201,92,255,.035)" stroke="${color}" stroke-width="3" stroke-linejoin="round"`;
+      const art={
+        circle:`<circle cx="50" cy="50" r="34" ${common}/><circle cx="50" cy="50" r="22" fill="none" stroke="${color}" stroke-width="1.4" opacity=".48"/>`,
+        ring:`<circle cx="50" cy="50" r="38" fill="none" stroke="${color}" stroke-width="6"/><circle cx="50" cy="50" r="25" fill="none" stroke="${color}" stroke-width="2" opacity=".45"/>`,
+        square:`<rect x="18" y="18" width="64" height="64" rx="5" ${common}/><rect x="29" y="29" width="42" height="42" fill="none" stroke="${color}" stroke-width="1.4" opacity=".42"/>`,
+        diamond:`<polygon points="50,10 90,50 50,90 10,50" ${common}/><polygon points="50,27 73,50 50,73 27,50" fill="none" stroke="${color}" stroke-width="1.4" opacity=".46"/>`,
+        triangle:`<polygon points="50,10 91,84 9,84" ${common}/><polygon points="50,31 72,72 28,72" fill="none" stroke="${color}" stroke-width="1.4" opacity=".46"/>`,
+        star:`<polygon points="50,7 61,36 92,37 67,56 76,87 50,69 24,87 33,56 8,37 39,36" ${common}/><circle cx="50" cy="50" r="11" fill="none" stroke="${color}" stroke-width="1.4" opacity=".46"/>`,
+        hex:`<polygon points="28,12 72,12 94,50 72,88 28,88 6,50" ${common}/><polygon points="37,29 63,29 77,50 63,71 37,71 23,50" fill="none" stroke="${color}" stroke-width="1.4" opacity=".46"/>`,
+        cross:`<path d="M39 9h22v30h30v22H61v30H39V61H9V39h30Z" ${common}/><path d="M46 27h8v19h19v8H54v19h-8V54H27v-8h19Z" fill="none" stroke="${color}" stroke-width="1.4" opacity=".46"/>`
+      };
+      return `<svg viewBox="0 0 100 100" aria-hidden="true">${art[type]}</svg>`;
+    }
+
+    function addMover(kind,{correct=false,speed=40,finaleMode=false}={}){
+      const button=document.createElement("button");
+      button.type="button";
+      button.className="moving-object";
+      button.setAttribute("aria-label",correct?"Shroud target":"Rift symbol");
+      button.dataset.correct=correct?"1":"0";
+      if(ASSETS[kind]){
+        const img=document.createElement("img");
+        img.src=ASSETS[kind]; img.alt=""; button.appendChild(img);
+      }else{
+        button.innerHTML=shapeSvg(kind,COLORS[Math.floor(Math.random()*COLORS.length)]);
+      }
+      const size=Math.max(68,Math.min(102,window.innerWidth*.07));
+      const angle=random(0,Math.PI*2);
+      const multiplier=random(.72,1.28);
+      const mover={
+        el:button,
+        x:random(-size,Math.max(size,window.innerWidth-size)),
+        y:random(-size,Math.max(size,window.innerHeight-size)),
+        vx:Math.cos(angle)*speed*multiplier,
+        vy:Math.sin(angle)*speed*multiplier,
+        rotation:random(0,360),
+        rotationSpeed:random(-25,25)*(finaleMode?1.6:1),
+        phase:random(0,Math.PI*2),
+        wobble:random(.35,1.1)*(finaleMode?1.5:1),
+        size
+      };
+      button.addEventListener("click",event=>{
+        event.stopPropagation();
+        if(locked||finaleMode)return;
+        if(button.dataset.correct==="1") succeed(); else fail();
+      });
+      field.appendChild(button); movers.push(mover); return mover;
+    }
+
+    function clearMovers(){ movers.forEach(m=>m.el.remove()); movers=[]; }
+
+    function spawnStage(number){
+      clearMovers(); stage=number; locked=false;
+      const config=STAGES[number];
+      for(let i=0;i<config.shapes;i+=1){
+        const shape=SHAPES[Math.floor(Math.random()*SHAPES.length)];
+        addMover(shape,{speed:config.speed*random(.8,1.18)});
+      }
+      addMover(config.target,{correct:true,speed:config.speed*random(.88,1.08)});
+    }
+
+    function beginMysticTransition(){
+      locked=true;
+      veilMessage.textContent="WHEN THE SHROUD SPEAKS YOU LISTEN";
+      veil.classList.remove("clear","message-out","command");
+      veil.classList.add("active","message");
+    }
+
+    function completeMysticTransition(nextAction){
+      setTimeout(()=>veil.classList.add("message-out"),2200);
+      setTimeout(()=>{
+        nextAction();
+        locked=true;
+        veil.classList.remove("active","message","message-out","command");
+        veil.classList.add("clear");
+        setTimeout(()=>{ locked=false; },1450);
+      },3400);
+    }
+
+    function transitionTo(next){
+      beginMysticTransition();
+      completeMysticTransition(()=>spawnStage(next));
+    }
+
+    function succeed(){
+      if(stage<3) transitionTo(stage+1);
+      else{
+        beginMysticTransition();
+        completeMysticTransition(showFinale);
+      }
+    }
+
+    function returnToMap(){
+      locked=true;
+      finale.classList.add("departing");
+      veil.classList.remove("message","message-out","command","clear");
+      veil.classList.add("active");
+      setTimeout(()=>{
+        sessionStorage.setItem("newWorldRiftReturn","1");
+        window.location.href="index.html";
+      },1550);
+    }
+
+    function fail(){ returnToMap(); }
+
+    function showFinale(){
+      clearMovers();
+      const kinds=["chair","onion","milk"];
+      for(let i=0;i<30;i+=1){ addMover(kinds[i%3],{speed:96*random(.75,1.32),finaleMode:true}); }
+      finale.classList.add("show"); finale.setAttribute("aria-hidden","false");
+    }
+
+    function revealGambleCommand(){
+      if(finaleDeparting)return;
+      finaleDeparting=true; locked=true;
+      finale.classList.add("departing");
+      veil.classList.remove("clear","message","message-out","command");
+      veil.classList.add("active");
+      setTimeout(()=>{
+        veilMessage.textContent="!gamble ^@-;>*";
+        veil.classList.add("message","command");
+      },1550);
+      setTimeout(()=>veil.classList.add("message-out"),11550);
+      setTimeout(()=>{
+        sessionStorage.setItem("newWorldRiftReturn","1");
+        window.location.href="index.html";
+      },13400);
+    }
+
+    function animate(now){
+      const dt=Math.min(.04,(now-lastFrame)/1000); lastFrame=now;
+      const w=window.innerWidth,h=window.innerHeight,t=now/1000;
+      movers.forEach(m=>{
+        const turn=Math.sin(t*m.wobble+m.phase)*.34;
+        const cos=Math.cos(turn*dt),sin=Math.sin(turn*dt);
+        const vx=m.vx*cos-m.vy*sin,vy=m.vx*sin+m.vy*cos;
+        m.vx=vx; m.vy=vy; m.x+=m.vx*dt; m.y+=m.vy*dt; m.rotation+=m.rotationSpeed*dt;
+        const margin=m.size*1.15;
+        if(m.x < -margin) m.x=w+margin;
+        if(m.x > w+margin) m.x=-margin;
+        if(m.y < -margin) m.y=h+margin;
+        if(m.y > h+margin) m.y=-margin;
+        const float=Math.sin(t*1.35+m.phase)*7;
+        m.el.style.transform=`translate3d(${m.x}px,${m.y+float}px,0) rotate(${m.rotation}deg)`;
+      });
+      rafId=requestAnimationFrame(animate);
+    }
+
+    document.querySelectorAll(".answer").forEach(button=>{
+      button.addEventListener("click",()=>{
+        document.querySelectorAll(".answer").forEach(choice=>choice.classList.remove("selected"));
+        button.classList.add("selected"); document.body.classList.add("answered");
+        revealGambleCommand();
+      });
+    });
+    document.getElementById("return-map").addEventListener("click",event=>{
+      event.preventDefault(); returnToMap();
+    });
+    makeSparkles();
+    requestAnimationFrame(()=>{
+      document.body.classList.add("ready");
+      setTimeout(()=>{ veil.classList.add("clear"); spawnStage(1); },650);
+    });
+    rafId=requestAnimationFrame(animate);
+  </script>
+</body>
+</html>
