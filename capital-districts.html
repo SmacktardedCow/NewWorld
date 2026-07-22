@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CowCorp Capital Districts</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --panel: rgba(4, 9, 15, 0.94);
+      --line: rgba(151, 211, 255, 0.48);
+      --text: #eef7ff;
+      --muted: #91a4b6;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #000;
+      color: var(--text);
+      font-family: "Arial Narrow", "Bahnschrift Condensed", Impact, sans-serif;
+    }
+
+    button { font: inherit; }
+
+    .capital-screen {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      isolation: isolate;
+      opacity: 0;
+      animation: revealMap 1.2s 0.25s ease forwards;
+    }
+
+    .capital-screen::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 50% 49%, transparent 0 34%, rgba(0, 0, 0, .08) 62%, rgba(0, 0, 0, .72) 112%),
+        linear-gradient(180deg, rgba(1, 4, 8, .30), transparent 22%, transparent 74%, rgba(0, 0, 0, .58));
+    }
+
+    .map-stage {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: min(100vw, 177.7778vh);
+      height: min(100vh, 56.25vw);
+      transform: translate(-50%, -50%);
+      z-index: 1;
+    }
+
+    .city-art,
+    .district-map {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .city-art {
+      object-fit: fill;
+      filter: saturate(.9) contrast(1.08) brightness(.78);
+    }
+
+    .district-map {
+      z-index: 3;
+      overflow: visible;
+    }
+
+    .district {
+      cursor: pointer;
+      outline: none;
+      transition: opacity 240ms ease, filter 240ms ease;
+    }
+
+    .district .district-fill {
+      fill: var(--district-color);
+      fill-opacity: .045;
+      stroke: var(--district-color);
+      stroke-opacity: .18;
+      stroke-width: 3;
+      vector-effect: non-scaling-stroke;
+      transition: fill-opacity 240ms ease, stroke-opacity 240ms ease, stroke-width 240ms ease;
+    }
+
+    .district .district-edge {
+      fill: none;
+      stroke: var(--district-color);
+      stroke-opacity: 0;
+      stroke-width: 11;
+      vector-effect: non-scaling-stroke;
+      filter: blur(7px);
+      transition: stroke-opacity 240ms ease;
+    }
+
+    .district:hover .district-fill,
+    .district:focus .district-fill,
+    .district.selected .district-fill {
+      fill-opacity: .22;
+      stroke-opacity: .98;
+      stroke-width: 4;
+      filter: drop-shadow(0 0 8px var(--district-color));
+    }
+
+    .district:hover .district-edge,
+    .district:focus .district-edge,
+    .district.selected .district-edge {
+      stroke-opacity: .72;
+    }
+
+    .district-label {
+      fill: #fff;
+      font-size: 25px;
+      font-weight: 1000;
+      letter-spacing: .13em;
+      text-anchor: middle;
+      paint-order: stroke;
+      stroke: rgba(0, 0, 0, .92);
+      stroke-width: 8px;
+      stroke-linejoin: round;
+      opacity: .38;
+      pointer-events: none;
+      transition: opacity 240ms ease;
+    }
+
+    .district:hover .district-label,
+    .district:focus .district-label,
+    .district.selected .district-label { opacity: 1; }
+
+    .center-pulse {
+      transform-origin: 832px 454px;
+      transform: translateY(-28px);
+      animation: centerPulse 3.8s ease-in-out infinite;
+    }
+
+    .hud-header {
+      position: fixed;
+      left: 28px;
+      top: 24px;
+      z-index: 10;
+      pointer-events: none;
+      text-transform: uppercase;
+      text-shadow: 0 2px 15px #000;
+    }
+
+    .hud-eyebrow {
+      color: #73cfff;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .28em;
+    }
+
+    .hud-title {
+      margin-top: 2px;
+      font-size: clamp(28px, 3.5vw, 58px);
+      font-weight: 1000;
+      letter-spacing: .055em;
+      line-height: .95;
+    }
+
+    .hud-subtitle {
+      margin-top: 9px;
+      color: #a9b7c4;
+      font-family: Arial, sans-serif;
+      font-size: 11px;
+      letter-spacing: .16em;
+    }
+
+    .return-button {
+      position: fixed;
+      right: 24px;
+      top: 22px;
+      z-index: 20;
+      min-width: 160px;
+      padding: 12px 18px;
+      border: 1px solid rgba(103, 201, 255, .65);
+      background: rgba(3, 11, 18, .88);
+      color: #dff6ff;
+      font-size: 12px;
+      font-weight: 1000;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: inset 0 0 18px rgba(56, 164, 224, .08), 0 0 20px rgba(0, 0, 0, .5);
+      clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+    }
+
+    .return-button:hover,
+    .return-button:focus-visible {
+      outline: none;
+      color: #fff;
+      border-color: #b8ebff;
+      box-shadow: inset 0 0 22px rgba(56, 164, 224, .2), 0 0 20px rgba(50, 176, 255, .25);
+    }
+
+    .district-card {
+      --accent: #d3424f;
+      position: fixed;
+      left: 28px;
+      bottom: 27px;
+      z-index: 12;
+      width: min(380px, calc(100vw - 56px));
+      min-height: 190px;
+      padding: 18px 20px 17px;
+      border: 1px solid color-mix(in srgb, var(--accent) 78%, white 6%);
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--accent) 14%, transparent), transparent 42%),
+        var(--panel);
+      opacity: 0;
+      transform: translateY(18px);
+      pointer-events: none;
+      transition: opacity 220ms ease, transform 220ms ease;
+      box-shadow: inset 0 0 30px rgba(255,255,255,.025), 0 15px 50px rgba(0,0,0,.62), 0 0 30px color-mix(in srgb, var(--accent) 18%, transparent);
+      clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
+    }
+
+    .district-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .district-card::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 58%;
+      height: 3px;
+      background: var(--accent);
+      box-shadow: 0 0 13px var(--accent);
+    }
+
+    .card-kicker {
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 1000;
+      letter-spacing: .24em;
+      text-transform: uppercase;
+    }
+
+    .card-name {
+      margin-top: 3px;
+      font-size: 34px;
+      font-weight: 1000;
+      letter-spacing: .04em;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      margin-top: 15px;
+      border: 1px solid rgba(255,255,255,.09);
+      background: rgba(255,255,255,.09);
+    }
+
+    .stat {
+      padding: 10px 12px;
+      background: rgba(2, 7, 12, .96);
+    }
+
+    .stat-label {
+      color: #8093a4;
+      font-family: Arial, sans-serif;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .stat-value {
+      margin-top: 3px;
+      color: #fff;
+      font-size: 21px;
+      font-weight: 1000;
+      letter-spacing: .05em;
+    }
+
+    .control-track {
+      height: 6px;
+      margin-top: 13px;
+      overflow: hidden;
+      background: rgba(255,255,255,.09);
+    }
+
+    .control-fill {
+      width: 100%;
+      height: 100%;
+      background: var(--accent);
+      box-shadow: 0 0 12px var(--accent);
+    }
+
+    .ceo-card {
+      display: grid;
+      grid-template-columns: 1fr 116px;
+      gap: 14px;
+      width: min(470px, calc(100vw - 56px));
+    }
+
+    .ceo-portrait {
+      align-self: stretch;
+      min-height: 160px;
+      border: 1px solid rgba(191, 95, 255, .45);
+      background: #030108;
+      overflow: hidden;
+    }
+
+    .ceo-portrait img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      filter: contrast(1.06) saturate(1.08);
+    }
+
+    .ceo-warning {
+      margin-top: 14px;
+      color: #f0c9ff;
+      font-family: Arial, sans-serif;
+      font-size: 11px;
+      font-weight: 900;
+      line-height: 1.42;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .test-chip {
+      position: fixed;
+      right: 25px;
+      bottom: 24px;
+      z-index: 10;
+      padding: 8px 11px;
+      border: 1px solid rgba(255, 184, 69, .42);
+      background: rgba(13, 9, 2, .72);
+      color: #ffcf79;
+      font-family: Arial, sans-serif;
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+    }
+
+    .screen-fade {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      pointer-events: none;
+      background: #000;
+      opacity: 0;
+      transition: opacity 900ms ease-in-out;
+    }
+
+    .screen-fade.active { opacity: 1; }
+
+    @keyframes revealMap { to { opacity: 1; } }
+    @keyframes centerPulse {
+      0%, 100% { filter: drop-shadow(0 0 7px rgba(189, 82, 255, .38)); }
+      50% { filter: drop-shadow(0 0 20px rgba(189, 82, 255, .9)); }
+    }
+
+    @media (max-width: 720px) {
+      .hud-header { left: 14px; top: 14px; }
+      .hud-subtitle, .test-chip { display: none; }
+      .return-button { right: 12px; top: 12px; min-width: 0; padding: 10px 12px; }
+      .district-card { left: 12px; bottom: 12px; width: calc(100vw - 24px); }
+      .ceo-card { width: calc(100vw - 24px); grid-template-columns: 1fr 94px; }
+      .district-label { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="capital-screen" aria-label="CowCorp Capital district map">
+    <header class="hud-header">
+      <div class="hud-eyebrow">New World // Capital Theatre</div>
+      <div class="hud-title">CowCorp Capital</div>
+      <div class="hud-subtitle">District control tactical overview</div>
+    </header>
+
+    <button class="return-button" id="return-map" type="button">Return to World</button>
+
+    <div class="map-stage">
+      <img class="city-art" src="cowcorp-capital-city-v1.png" alt="Bird's-eye view of the CowCorp capital" />
+      <svg class="district-map" viewBox="0 0 1664 936" role="group" aria-label="Capital districts">
+        <g class="district" tabindex="0" role="button" aria-label="District 1" data-district="1" style="--district-color:#e43e4d">
+          <path class="district-edge" d="M832 7 A710 447 0 0 0 122 454 L636 454 A196 136 0 0 1 832 318 Z" />
+          <path class="district-fill" d="M832 7 A710 447 0 0 0 122 454 L636 454 A196 136 0 0 1 832 318 Z" />
+          <text class="district-label" x="488" y="240">DISTRICT 1</text>
+        </g>
+        <g class="district" tabindex="0" role="button" aria-label="District 2" data-district="2" style="--district-color:#ffbf3e">
+          <path class="district-edge" d="M832 7 A710 447 0 0 1 1542 454 L1028 454 A196 136 0 0 0 832 318 Z" />
+          <path class="district-fill" d="M832 7 A710 447 0 0 1 1542 454 L1028 454 A196 136 0 0 0 832 318 Z" />
+          <text class="district-label" x="1176" y="240">DISTRICT 2</text>
+        </g>
+        <g class="district" tabindex="0" role="button" aria-label="District 3" data-district="3" style="--district-color:#35ce71">
+          <path class="district-edge" d="M122 454 A710 447 0 0 0 832 901 L832 590 A196 136 0 0 1 636 454 Z" />
+          <path class="district-fill" d="M122 454 A710 447 0 0 0 832 901 L832 590 A196 136 0 0 1 636 454 Z" />
+          <text class="district-label" x="488" y="696">DISTRICT 3</text>
+        </g>
+        <g class="district" tabindex="0" role="button" aria-label="District 4" data-district="4" style="--district-color:#526dff">
+          <path class="district-edge" d="M1542 454 A710 447 0 0 1 832 901 L832 590 A196 136 0 0 0 1028 454 Z" />
+          <path class="district-fill" d="M1542 454 A710 447 0 0 1 832 901 L832 590 A196 136 0 0 0 1028 454 Z" />
+          <text class="district-label" x="1176" y="696">DISTRICT 4</text>
+        </g>
+        <g class="district center-pulse" tabindex="0" role="button" aria-label="Central District" data-district="center" style="--district-color:#bd52ff">
+          <ellipse class="district-edge" cx="832" cy="454" rx="196" ry="136" />
+          <ellipse class="district-fill" cx="832" cy="454" rx="196" ry="136" />
+          <text class="district-label" x="832" y="463">CEO</text>
+        </g>
+      </svg>
+    </div>
+
+    <section class="district-card" id="district-card" aria-live="polite"></section>
+    <div class="test-chip">Capital access: test override active</div>
+  </main>
+  <div class="screen-fade" id="screen-fade" aria-hidden="true"></div>
+
+  <script>
+    const districts = {
+      "1": { name: "District 1", color: "#e43e4d", control: 100, stronghold: 0 },
+      "2": { name: "District 2", color: "#ffbf3e", control: 100, stronghold: 0 },
+      "3": { name: "District 3", color: "#35ce71", control: 100, stronghold: 0 },
+      "4": { name: "District 4", color: "#526dff", control: 100, stronghold: 0 },
+      center: { name: "Central District", color: "#bd52ff", boss: "CowCorp CEO" }
+    };
+
+    const card = document.getElementById("district-card");
+    const regions = [...document.querySelectorAll(".district")];
+    let pinnedDistrict = null;
+
+    function renderDistrictCard(id) {
+      const district = districts[id];
+      if (!district) return;
+      card.style.setProperty("--accent", district.color);
+      if (id === "center") {
+        card.className = "district-card ceo-card visible";
+        card.innerHTML = `
+          <div>
+            <div class="card-kicker">Central District // Boss</div>
+            <div class="card-name">${district.boss}</div>
+            <div class="ceo-warning">TAKE CONTROL OFF DISTRICTS TO CHALLENGE THE COWCORP CEO</div>
+          </div>
+          <div class="ceo-portrait"><img src="boss-cowcorp-ceo-v4.png" alt="CowCorp CEO" /></div>
+        `;
+        return;
+      }
+      card.className = "district-card visible";
+      card.innerHTML = `
+        <div class="card-kicker">CowCorp Capital</div>
+        <div class="card-name">${district.name}</div>
+        <div class="stats-grid">
+          <div class="stat">
+            <div class="stat-label">Enemy Control</div>
+            <div class="stat-value">${district.control}%</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Stronghold</div>
+            <div class="stat-value">${district.stronghold}/1</div>
+          </div>
+        </div>
+        <div class="control-track"><div class="control-fill" style="width:${district.control}%"></div></div>
+      `;
+    }
+
+    function selectDistrict(element, pin = false) {
+      regions.forEach(region => region.classList.toggle("selected", region === element && pin));
+      if (pin) pinnedDistrict = element.dataset.district;
+      renderDistrictCard(element.dataset.district);
+    }
+
+    function clearHover() {
+      if (pinnedDistrict) {
+        const pinned = regions.find(region => region.dataset.district === pinnedDistrict);
+        if (pinned) renderDistrictCard(pinnedDistrict);
+        return;
+      }
+      card.classList.remove("visible");
+    }
+
+    regions.forEach(region => {
+      region.addEventListener("pointerenter", () => selectDistrict(region));
+      region.addEventListener("pointerleave", clearHover);
+      region.addEventListener("focus", () => selectDistrict(region));
+      region.addEventListener("blur", clearHover);
+      region.addEventListener("click", () => selectDistrict(region, true));
+      region.addEventListener("keydown", event => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          selectDistrict(region, true);
+        }
+      });
+    });
+
+    function leaveCapital() {
+      const fade = document.getElementById("screen-fade");
+      if (fade.classList.contains("active")) return;
+      fade.classList.add("active");
+      setTimeout(() => { window.location.href = "index.html"; }, 920);
+    }
+
+    document.getElementById("return-map").addEventListener("click", leaveCapital);
+  </script>
+</body>
+</html>

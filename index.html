@@ -2288,6 +2288,20 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       animation: riftEntryFlash 1250ms ease-in forwards;
     }
 
+    #capital-entry-transition {
+      position: fixed;
+      inset: 0;
+      z-index: 1210;
+      pointer-events: none;
+      opacity: 0;
+      background: #000;
+      transition: opacity 900ms ease-in-out;
+    }
+
+    #capital-entry-transition.active {
+      opacity: 1;
+    }
+
     @keyframes riftEntrySpiral {
       0% { opacity: 0; transform: translate(-50%, -50%) scale(.05) rotate(0deg); }
       20% { opacity: 1; }
@@ -2965,6 +2979,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
   </section>
   <div id="live-fade"></div>
   <div id="rift-entry-transition" aria-hidden="true"></div>
+  <div id="capital-entry-transition" aria-hidden="true"></div>
   <div id="live-overlay" aria-hidden="true">
     <div class="live-shell">
       <div class="live-header">
@@ -3478,7 +3493,11 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       3: makeSectorState(3, "Jungle", "Colonel Bullseye"),
       4: makeSectorState(4, "The North Pole", "MechaCow"),
       5: makeSectorState(5, "Shroudlands", "PsyCow"),
-      6: makeSectorState(6, "Swamplands", "3Horn Green"),
+      6: makeSectorState(6, "Swamplands", "3Horn Green", {
+        objectiveName: "Plaugeroot Generators",
+        objectiveRemaining: 0,
+        objectiveTotal: 2
+      }),
       7: makeSectorState(7, "Red Basin", "Cult Leader"),
       8: makeSectorState(8, "West Hog Plains", "Hog Twin - Blue", {
         portraitClass: "hog-twin-west"
@@ -3487,7 +3506,10 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
         portraitClass: "hog-twin-east"
       }),
       10: makeSectorState(10, "The Capital", "CowCorp CEO", {
-        garrisonedTroops: 0
+        garrisonedTroops: 10000,
+        objectiveName: "Strongholds",
+        objectiveRemaining: 4,
+        objectiveTotal: 4
       })
     };
 
@@ -3531,6 +3553,10 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       {
         command: "!raid",
         description: "Use !raid to start an assault on a sector to overthrow the boss or governor."
+      },
+      {
+        command: "!sector",
+        description: "Check the current status of the sector you enter. Example: !sector S2"
       },
       {
         command: "!milkers",
@@ -4090,23 +4116,81 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
 
     function renderTroopsStat(sectorNumber) {
       const state = sectorStates[sectorNumber];
-      const troopsClassified = sectorNumber === 4 && Number(state?.bossAlive) !== 0;
       const troops = state
         ? Math.max(0, Number(state.garrisonedTroops) || 0)
         : Number(sectorTroops[sectorNumber] || 0);
+      if (sectorNumber === 4) {
+        return `
+          <div class="sector-card-stat">
+            <span class="sector-card-stat-label">Synths</span>
+            <span class="sector-card-stat-value">????</span>
+          </div>
+        `;
+      }
+      if (sectorNumber === 5) {
+        return `
+          <div class="sector-card-stat">
+            <span class="sector-card-stat-label">M1LK-#?@</span>
+            <span class="sector-card-stat-value">??//%#@!</span>
+          </div>
+        `;
+      }
+      if (sectorNumber === 6) {
+        return `
+          <div class="sector-card-stat">
+            <span class="sector-card-stat-label">Corruption State</span>
+            <span class="sector-card-stat-value" style="color:#ff3349">OVERWHELMING</span>
+          </div>
+        `;
+      }
+      if (sectorNumber === 7) {
+        const meta = getSectorDisplayMeta(state);
+        const loyalty = !meta.isEnemy
+          ? { value: "LOYAL", color: "#76e481" }
+          : meta.control <= 25
+            ? { value: "DISLOYAL", color: "#ff3349" }
+            : meta.control <= 50
+              ? { value: "SWAYING", color: "#ffc15c" }
+              : { value: "STRONG", color: "#f0d0a5" };
+        return `
+          <div class="sector-card-stat">
+            <span class="sector-card-stat-label">Loyalty</span>
+            <span class="sector-card-stat-value" style="color:${loyalty.color}">${loyalty.value}</span>
+          </div>
+        `;
+      }
+      if (sectorNumber === 8 || sectorNumber === 9) {
+        return `
+          <div class="sector-card-stat">
+            <span class="sector-card-stat-label">Hogs</span>
+            <span class="sector-card-stat-value">AT LEAST A COUPLE MIL</span>
+          </div>
+        `;
+      }
+      if (sectorNumber === 10) {
+        return `
+          <div class="sector-card-stat">
+            <span class="sector-card-stat-label">Troops</span>
+            <span class="sector-card-stat-value">10K</span>
+          </div>
+        `;
+      }
       return `
         <div class="sector-card-stat">
           <span class="sector-card-stat-label">Troops</span>
-          <span class="sector-card-stat-value">${troopsClassified ? "???" : troops.toLocaleString()}</span>
+          <span class="sector-card-stat-value">${troops.toLocaleString()}</span>
         </div>
       `;
     }
 
     function getSectorObjectiveMeta(sectorNumber) {
       const state = sectorStates[sectorNumber];
-      const defaults = sectorNumber === 1
-        ? { name: "Milker Rigs", label: "Rigs Active", total: 3 }
-        : { name: "Flagships", label: "Flagships Active", total: 4 };
+      const defaults = {
+        1: { name: "Milker Rigs", label: "Rigs Active", total: 3 },
+        2: { name: "Flagships", label: "Flagships Active", total: 4 },
+        6: { name: "Plaugeroot Generators", label: "Plaugeroot Generators", total: 2 },
+        10: { name: "Strongholds", label: "Strongholds", total: 4 }
+      }[sectorNumber] || { name: "Objectives", label: "Objectives", total: 1 };
       const remaining = Math.max(
         0,
         Number(state?.objectiveRemaining) || 0
@@ -4119,6 +4203,8 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       return {
         name: String(state?.objectiveName || defaults.name),
         label: defaults.label,
+        value: `${remaining}/${total}`,
+        progress: total > 0 ? (remaining / total) * 100 : 0,
         remaining,
         total
       };
@@ -4253,8 +4339,12 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
           message = `Use !raid Sector ${sectorNumber} or !raid ${raidNames[sectorNumber]}`;
         }
       } else if (sectorNumber === 5) {
-        message = "ERROR // R1FT-ACCE55-C0RRUPTED<br>5H-R0UD // ??%#@! // SEEK THE RIFT";
-        corrupted = true;
+        if (Number(sectorStates[2]?.bossAlive) !== 0) {
+          message = "Liberate S2 to access";
+        } else {
+          message = "ERROR // R1FT-ACCE55-C0RRUPTED<br>5H-R0UD // ??%#@! // SEEK THE RIFT";
+          corrupted = true;
+        }
       } else if (sectorNumber === 8 || sectorNumber === 9) {
         const prerequisitesCleared = [1, 2, 3, 4, 5, 6, 7]
           .every(isSectorLiberated);
@@ -4438,12 +4528,12 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
                 </div>` : ""}
                 <div class="sector-card-stat">
                   <span class="sector-card-stat-label">Status</span>
-                  <span class="sector-card-stat-value" style="color:${statusColor}">${statusLabel}</span>
+                  <span class="sector-card-stat-value" style="color:${statusColor}">${statusLabel} ${control}%</span>
                 </div>
                 ${renderTroopsStat(3)}
               </div>
               <div class="sector-control-track" aria-hidden="true">
-                <div class="sector-control-fill" style="width:${objective ? objective.progress : control}%"></div>
+                <div class="sector-control-fill" style="width:${control}%"></div>
               </div>
             </div>
             ${meta.isEnemy ? `<div class="sector-card-portrait sector-classified-portrait" aria-label="Classified portrait unavailable">
@@ -4484,10 +4574,8 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
     }
 
     function renderSwamplandsTooltip(region) {
-      const control = sector6State.loaded ? sector6State.control : 100;
-      const fullControl = control === 100;
-      const statusLabel = fullControl ? "FULL CONTROL" : "CONTESTED";
-      const statusColor = fullControl ? "#ff4a59" : "#a0dc55";
+      const meta = getSectorDisplayMeta(sector6State);
+      const control = meta.control;
       return `
         <article class="sector-card sector-card--swamp">
           <div class="sector-card-main">
@@ -4496,16 +4584,13 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
               <div class="sector-card-title">${escapeHtml(region.name)}</div>
               <div class="sector-card-stats">
                 <div class="sector-card-stat">
-                  <span class="sector-card-stat-label">Boss</span>
-                  <span class="sector-card-stat-value">${escapeHtml(sector6State.bossName)}</span>
+                  <span class="sector-card-stat-label">${escapeHtml(meta.leaderLabel)}</span>
+                  <span class="sector-card-stat-value">${escapeHtml(meta.leaderName)}</span>
                 </div>
-                <div class="sector-card-stat">
-                  <span class="sector-card-stat-label">Control</span>
-                  <span class="sector-card-stat-value">${control}%</span>
-                </div>
+                ${renderObjectiveStat(6)}
                 <div class="sector-card-stat">
                   <span class="sector-card-stat-label">Status</span>
-                  <span class="sector-card-stat-value" style="color:${statusColor}">${statusLabel}</span>
+                  <span class="sector-card-stat-value" style="color:${meta.statusColor}">${escapeHtml(meta.statusText)}</span>
                 </div>
                 ${renderTroopsStat(6)}
               </div>
@@ -4548,12 +4633,12 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
                 </div>` : ""}
                 <div class="sector-card-stat">
                   <span class="sector-card-stat-label">Status</span>
-                  <span class="sector-card-stat-value" style="color:${meta.statusColor}">${escapeHtml(meta.statusLabel)}</span>
+                  <span class="sector-card-stat-value" style="color:${meta.statusColor}">${escapeHtml(meta.statusText)}</span>
                 </div>
                 ${renderTroopsStat(4)}
               </div>
               <div class="sector-control-track" aria-hidden="true">
-                <div class="sector-control-fill" style="width:${objective ? objective.progress : meta.control}%"></div>
+                <div class="sector-control-fill" style="width:${meta.control}%"></div>
               </div>
             </div>
             <div class="sector-card-portrait">
@@ -4576,25 +4661,27 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
     }
 
     function renderRiftlandsTooltip(region) {
-      const control = 100;
+      const state = sectorStates[5];
+      const meta = getSectorDisplayMeta(state);
+      const control = meta.control;
       return `
         <article class="sector-card sector-card--rift">
           <div class="sector-card-main">
             <div class="sector-card-copy">
               <div class="sector-card-kicker">Sector 5</div>
-              <div class="sector-card-title">${escapeHtml(region.name)}</div>
+              <div class="sector-card-title">5H-R0UD // [UNKN0WN]</div>
               <div class="sector-card-stats">
                 <div class="sector-card-stat">
-                  <span class="sector-card-stat-label">Boss</span>
-                  <span class="sector-card-stat-value">PsyCow</span>
+                  <span class="sector-card-stat-label">??//5H-R0UD</span>
+                  <span class="sector-card-stat-value">P5Y-??#@!</span>
                 </div>
                 <div class="sector-card-stat">
-                  <span class="sector-card-stat-label">Control</span>
+                  <span class="sector-card-stat-label">${escapeHtml(state.controlLabel)}</span>
                   <span class="sector-card-stat-value">${control}%</span>
                 </div>
                 <div class="sector-card-stat">
-                  <span class="sector-card-stat-label">Status</span>
-                  <span class="sector-card-stat-value" style="color:#ff4a59">FULL CONTROL</span>
+                  <span class="sector-card-stat-label">5T4T-U5</span>
+                  <span class="sector-card-stat-value" style="color:#ff4a59">#@! ${control}% // N0-S1GNAL</span>
                 </div>
                 ${renderTroopsStat(5)}
               </div>
@@ -4607,7 +4694,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
             </div>
           </div>
           <div class="sector-card-body">
-            <p class="sector-card-description">This psionic monstrosity was birthed in CowCorp Labs. A sentient machine empowered by psionic Milkers, this area used to be a thriving oasis. Now we can't tell what it is.</p>
+            <p class="sector-card-description">This island was covered by shrouded Milkers when the Large Milker Collider malfunctioned tearing a whole to an unknown reality.</p>
             <div style="margin-top:10px">${renderSectorAccessWarning(5)}</div>
           </div>
         </article>
@@ -4629,12 +4716,12 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
                   <span class="sector-card-stat-value">${escapeHtml(meta.leaderName)}</span>
                 </div>
                 <div class="sector-card-stat">
-                  <span class="sector-card-stat-label">Control</span>
+                  <span class="sector-card-stat-label">${escapeHtml(state.controlLabel)}</span>
                   <span class="sector-card-stat-value">${meta.control}%</span>
                 </div>
                 <div class="sector-card-stat">
                   <span class="sector-card-stat-label">Status</span>
-                  <span class="sector-card-stat-value" style="color:${meta.statusColor}">${meta.statusLabel}</span>
+                  <span class="sector-card-stat-value" style="color:${meta.statusColor}">${escapeHtml(meta.statusText)}</span>
                 </div>
                 ${renderTroopsStat(7)}
               </div>
@@ -4668,13 +4755,10 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
                   <span class="sector-card-stat-label">${escapeHtml(meta.leaderLabel)}</span>
                   <span class="sector-card-stat-value">${escapeHtml(meta.leaderName)}</span>
                 </div>
-                <div class="sector-card-stat">
-                  <span class="sector-card-stat-label">Control</span>
-                  <span class="sector-card-stat-value">${meta.control}%</span>
-                </div>
+                ${renderObjectiveStat(10)}
                 <div class="sector-card-stat">
                   <span class="sector-card-stat-label">Status</span>
-                  <span class="sector-card-stat-value" style="color:${meta.statusColor}">${meta.statusLabel}</span>
+                  <span class="sector-card-stat-value" style="color:${meta.statusColor}">${escapeHtml(meta.statusText)}</span>
                 </div>
                 ${renderTroopsStat(10)}
               </div>
@@ -4696,7 +4780,8 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
 
     function renderPlainsTooltip(region) {
       const state = plainsStates[region.number];
-      const control = state.control;
+      const meta = getSectorDisplayMeta(state);
+      const control = meta.control;
       return `
         <article class="sector-card sector-card--plains">
           <div class="sector-card-main">
@@ -4709,12 +4794,8 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
                   <span class="sector-card-stat-value">${escapeHtml(state.bossName)}</span>
                 </div>
                 <div class="sector-card-stat">
-                  <span class="sector-card-stat-label">Control</span>
-                  <span class="sector-card-stat-value">${control}%</span>
-                </div>
-                <div class="sector-card-stat">
                   <span class="sector-card-stat-label">Status</span>
-                  <span class="sector-card-stat-value" style="color:#ff4a59">FULL CONTROL</span>
+                  <span class="sector-card-stat-value" style="color:${meta.statusColor}">${escapeHtml(meta.statusText)}</span>
                 </div>
                 ${renderTroopsStat(region.number)}
               </div>
@@ -4727,7 +4808,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
             </div>
           </div>
           <div class="sector-card-body">
-            <p class="sector-card-description">This here's Hog Country. There are said to be millions of hogs who have made the plains their home.</p>
+            <p class="sector-card-description">This here's Hog Country. There are said to be millions of hogs who have made the plains their home. The CowCorp CEO uses them as fodder to protect the Capital.</p>
             <div style="margin-top:10px">${renderSectorAccessWarning(region.number)}</div>
           </div>
         </article>
@@ -4846,6 +4927,10 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
         return renderRiftlandsTooltip(region);
       }
 
+      if (region.id === "sector-purple") {
+        return renderRiftlandsTooltip(region);
+      }
+
       const liveState = sectorStates[region.number];
       if (
         liveState &&
@@ -4865,10 +4950,6 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
 
       if (region.id === "sector-swamplands") {
         return renderSwamplandsTooltip(region);
-      }
-
-      if (region.id === "sector-purple") {
-        return renderRiftlandsTooltip(region);
       }
 
       if (region.id === "sector-north-pole") {
@@ -5261,6 +5342,12 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       }
 
       if (sectorNumber === 5) {
+        if (Number(sectorStates[2]?.bossAlive) !== 0) {
+          return {
+            commands: [],
+            notice: "Liberate S2 to access"
+          };
+        }
         return {
           commands: [],
           notice: "ERROR // R1FT-ACCE55-C0RRUPTED // SEEK THE RIFT"
@@ -5292,13 +5379,20 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       const panel = getSectorPanelState(region);
       const commandInfo = getSectorPanelCommands(region);
       const isHeimClaim = region.number === 1 && panel.liberated;
-      const leaderLabel = display.isEnemy ? "Sector Boss" : "Sector Gov";
-      const leaderName = isHeimClaim ? "Heimidinger" : display.leaderName;
+      const isShroudSector = region.number === 5;
+      const leaderLabel = isShroudSector
+        ? "??//5H-R0UD"
+        : display.isEnemy ? "Sector Boss" : "Sector Gov";
+      const leaderName = isShroudSector
+        ? "P5Y-??#@!"
+        : isHeimClaim ? "Heimidinger" : display.leaderName;
       const portrait = renderSectorDrawerPortrait(region, state, display, panel);
       const sectorObjective = region.number === 3
         ? getSector3ObjectiveMeta(state)
         : region.number === 4
           ? getSector4ObjectiveMeta(state)
+          : region.number === 6 || region.number === 10
+            ? getSectorObjectiveMeta(region.number)
           : null;
 
       return `
@@ -5307,7 +5401,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
             <div class="sector-command-detail-copy">
               <div class="sector-command-detail-heading">
                 <span class="sector-command-detail-number">Sector ${region.number}</span>
-                <span class="sector-command-detail-name">${escapeHtml(region.name)}</span>
+                <span class="sector-command-detail-name">${escapeHtml(isShroudSector ? "5H-R0UD // [UNKN0WN]" : region.name)}</span>
               </div>
               <div class="sector-command-detail-meta">
                 <div class="sector-command-detail-meta-item">
@@ -5315,7 +5409,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
                   <span class="sector-command-detail-value">${escapeHtml(leaderName)}</span>
                 </div>
                 <div class="sector-command-detail-meta-item">
-                  <span class="sector-command-detail-label">${escapeHtml(sectorObjective ? sectorObjective.label : panel.controlLabel)}</span>
+                  <span class="sector-command-detail-label">${escapeHtml(sectorObjective ? sectorObjective.label : isShroudSector ? "C0NTR%L" : panel.controlLabel)}</span>
                   <span class="sector-command-detail-value">${escapeHtml(sectorObjective ? sectorObjective.value : `${panel.control}%`)}</span>
                 </div>
               </div>
@@ -7009,6 +7103,8 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
     }
 
     let riftEntryTimer = null;
+    let capitalEntryTimer = null;
+    const CAPITAL_DISTRICTS_TEST_UNLOCKED = true;
 
     function enterRift() {
       const transition = document.getElementById("rift-entry-transition");
@@ -7020,6 +7116,19 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       riftEntryTimer = setTimeout(() => {
         window.location.href = "rift-mock.html";
       }, 1220);
+    }
+
+    function enterCapitalDistricts() {
+      if (!CAPITAL_DISTRICTS_TEST_UNLOCKED) return;
+      const transition = document.getElementById("capital-entry-transition");
+      if (!transition || transition.classList.contains("active")) return;
+      globeSpinVelocity.x = 0;
+      globeSpinVelocity.y = 0;
+      transition.classList.add("active");
+      clearTimeout(capitalEntryTimer);
+      capitalEntryTimer = setTimeout(() => {
+        window.location.href = "capital-districts.html";
+      }, 920);
     }
 
     function initGlobe() {
@@ -7552,6 +7661,10 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
         if (!hits.length && !globeHits.length) return;
         if (hits.length && hits[0].object.userData.region.id === "landmark-rift-entrance") {
           enterRift();
+          return;
+        }
+        if (hits.length && hits[0].object.userData.region.id === "sector-capital") {
+          enterCapitalDistricts();
           return;
         }
         globeSpinVelocity.x = 0;
