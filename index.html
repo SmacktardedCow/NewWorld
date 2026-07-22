@@ -1498,8 +1498,8 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
     .pc-stat-line { display:grid; grid-template-columns:minmax(58px,auto) minmax(0,1fr); gap:7px; align-items:center; min-height:36px; padding:7px 9px; border-right:2px solid var(--pc-accent); border-bottom:2px solid var(--pc-accent); background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(0,0,0,.16)); color:#fff; font-family:Impact,Haettenschweiler,"Arial Narrow Bold",sans-serif; font-size:12px; letter-spacing:.025em; text-transform:uppercase; }
     .pc-stat-line:nth-child(even) { padding-left:9px; }
     .pc-stat-line b { min-width:0; padding:0; color:#fff; font-family:"Arial Narrow",Arial,sans-serif; font-size:10px; font-weight:900; overflow-wrap:normal; white-space:nowrap; text-align:right; }
-    .pc-stat-line.pc-citizenship { grid-template-columns:1fr; gap:1px; align-items:center; }
-    .pc-stat-line.pc-citizenship b { color:var(--pc-accent); font-size:9px; text-align:left; }
+    .pc-stat-line.pc-hell-gauntlets { grid-template-columns:1fr; gap:1px; align-items:center; }
+    .pc-stat-line.pc-hell-gauntlets b { color:var(--pc-accent); font-size:9px; text-align:left; }
     .pc-special-row { display:grid; grid-template-columns:59px minmax(0,1fr); min-height:52px; border-top:1px solid var(--pc-accent); }
     .pc-special-icon { display:flex; align-items:center; justify-content:center; border-right:1px solid var(--pc-accent); background:#050505; }
     .pc-special-icon svg { width:34px; height:34px; fill:none; stroke:var(--pc-accent-soft); stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; filter:drop-shadow(0 0 5px var(--pc-glow)); }
@@ -5827,8 +5827,12 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       document.getElementById("pc-troops").textContent = stats.troops ?? 0;
       document.getElementById("pc-boat").textContent = "Dinghy";
       document.getElementById("pc-ai-active").textContent = formatPlayerCardFlag(stats.aiActive ?? stats.ai);
-      document.getElementById("pc-citizenship-date").textContent =
-        formatPlayerCardDate(stats.citizenshipDate);
+      const hellGauntlets = document.getElementById("pc-hell-gauntlets");
+      const hasHellGauntlets = normalizeEnabled(
+        stats.hellGauntlets ?? stats.hellfireGauntlets
+      );
+      hellGauntlets.textContent = hasHellGauntlets ? "OWNED" : "NOT OWNED";
+      hellGauntlets.style.color = hasHellGauntlets ? "#76e481" : "#ff6874";
       document.getElementById("pc-bio").textContent = stats.bio || "Registered citizen of the New World.";
 
       const weapons = Array.isArray(stats.specialWeapons) ? stats.specialWeapons : (Array.isArray(stats.weapons) ? stats.weapons : []);
@@ -7107,6 +7111,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
     const CAPITAL_DISTRICTS_TEST_UNLOCKED = true;
 
     function enterRift() {
+      if (Number(sectorStates[2]?.bossAlive) !== 0) return;
       const transition = document.getElementById("rift-entry-transition");
       if (!transition || transition.classList.contains("active")) return;
       globeSpinVelocity.x = 0;
@@ -8022,7 +8027,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
           <div class="pc-stats">
             <div class="pc-stat-line">Level <b id="pc-level">-</b></div><div class="pc-stat-line">Milkers <b id="pc-milkers">-</b></div>
             <div class="pc-stat-line">Troops <b id="pc-troops">-</b></div><div class="pc-stat-line">Boat <b id="pc-boat">Dinghy</b></div>
-            <div class="pc-stat-line">AI Active <b id="pc-ai-active">-</b></div><div class="pc-stat-line pc-citizenship">Citizenship Given <b id="pc-citizenship-date">Not recorded</b></div>
+            <div class="pc-stat-line">AI Active <b id="pc-ai-active">-</b></div><div class="pc-stat-line pc-hell-gauntlets">Hellfire Gauntlets <b id="pc-hell-gauntlets">NOT OWNED</b></div>
           </div>
           <div class="pc-special-row"><div class="pc-special-icon" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M8 39l31-17 7 4-31 18zM36 24l3-9 6 1 1 10M20 38l-2 12M25 35l7 8M12 43l-4 8M42 20l8-5 5 2-9 8"/></svg></div><div class="pc-special-copy"><strong>UNIQUE WEAPON:</strong><span id="pc-unique-weapon">-</span></div></div>
           <div class="pc-special-row"><div class="pc-special-icon" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M23 8h18v8l5 8v31H18V24l5-8zM23 17h18M24 31h16M24 39h16"/></svg></div><div class="pc-special-copy"><strong>UNIQUE TRAIT:</strong><span id="pc-unique-trait">-</span></div></div>
