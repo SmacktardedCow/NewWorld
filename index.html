@@ -857,6 +857,19 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       box-shadow: inset 0 0 10px rgba(255, 63, 78, 0.04);
     }
 
+    .sector-command-detail-command.is-finisher {
+      border-color: rgba(255, 72, 61, 0.7);
+      background: rgba(190, 26, 35, 0.2);
+      color: #ff8d83;
+      box-shadow:
+        inset 0 0 12px rgba(255, 52, 68, 0.12),
+        0 0 9px rgba(255, 52, 68, 0.1);
+    }
+
+    .sector-command-detail-command.is-locked {
+      opacity: 0.48;
+    }
+
     .sector-command-detail-commands--governor {
       border-top-color: rgba(255, 196, 104, 0.32);
     }
@@ -3425,7 +3438,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       fishingTax: 0,
       sector3Hitsquad: 0,
       sector4Synths: 0,
-      gambleLimit: 10
+      gambleLimit: 0
     };
 
     const sectorTroops = Object.freeze({
@@ -3440,7 +3453,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       9: 2640
     });
 
-    const TEST_LIVE_SECTORS = new Set([1, 2, 3, 4]);
+    const TEST_LIVE_SECTORS = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9]);
 
     function makeSectorState(number, sectorName, bossName, extras = {}) {
       return {
@@ -3942,15 +3955,22 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       const state = sectorStates[sectorNumber];
       if (!state || !data || !TEST_LIVE_SECTORS.has(sectorNumber)) return;
 
-      const bossAlive = data.bossAlive == null
+      let bossAlive = data.bossAlive == null
         ? Number(state.bossAlive) === 1
         : Number(data.bossAlive) === 1;
-      const displayedControl = clampControl(
+      const sector5SnapshotLiberated = sectorNumber === 5 && (
+        Number(data.bossAlive) === 0 ||
+        Number(data.bossDefeated) === 1 ||
+        String(data.controlOwner || "").toLowerCase() === "liberated"
+      );
+      if (sector5SnapshotLiberated) bossAlive = false;
+      let displayedControl = clampControl(
         data.displayedControl ?? data.control,
         bossAlive
           ? clampControl(data.enemyControl, state.enemyControl)
           : clampControl(data.liberatedControl, state.liberatedControl)
       );
+      if (sectorNumber === 5 && !bossAlive) displayedControl = 100;
 
       state.sectorName = String(data.sectorName || state.sectorName);
       const incomingBossName = String(data.bossName || "").trim();
@@ -3968,7 +3988,9 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       state.bossAlive = bossAlive ? 1 : 0;
       state.bossDefeated = Number(data.bossDefeated) === 1 || !bossAlive ? 1 : 0;
       state.enemyControl = clampControl(data.enemyControl, state.enemyControl);
-      state.liberatedControl = clampControl(data.liberatedControl, state.liberatedControl);
+      state.liberatedControl = sectorNumber === 5 && !bossAlive
+        ? 100
+        : clampControl(data.liberatedControl, state.liberatedControl);
       state.control = displayedControl;
       state.displayedControl = displayedControl;
       state.controlOwner = data.controlOwner === "liberated" || !bossAlive
@@ -4088,7 +4110,10 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
           activeEffectState.fishingTax = site.fishingTax;
         }
         if (site.gambleLimit != null) {
-          activeEffectState.gambleLimit = site.gambleLimit;
+          const incomingGambleLimit = Math.max(0, Number(site.gambleLimit) || 0);
+          activeEffectState.gambleLimit = incomingGambleLimit === 1
+            ? 10
+            : incomingGambleLimit;
         }
         TEST_LIVE_SECTORS.forEach((sectorNumber) => {
           applyLiveSectorSnapshot(
@@ -4119,7 +4144,12 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       const troops = state
         ? Math.max(0, Number(state.garrisonedTroops) || 0)
         : Number(sectorTroops[sectorNumber] || 0);
-      if (sectorNumber === 4) {
+      const sector4BossStillControls = sectorNumber === 4 &&
+        Number(state?.bossAlive) === 1 &&
+        Number(state?.bossDefeated) !== 1 &&
+        String(state?.controlOwner || "").toLowerCase() !== "liberated" &&
+        !/(?:governor|sector gov)/i.test(String(state?.displayedLeaderRole || ""));
+      if (sector4BossStillControls) {
         return `
           <div class="sector-card-stat">
             <span class="sector-card-stat-label">Synths</span>
@@ -4127,7 +4157,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
           </div>
         `;
       }
-      if (sectorNumber === 5) {
+      if (sectorNumber === 5 && !isSectorLiberated(5)) {
         return `
           <div class="sector-card-stat">
             <span class="sector-card-stat-label">M1LK-#?@</span>
@@ -4322,21 +4352,27 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
         } else if (getSectorDisplayMeta(sectorStates[2]).fullEnemyControl) {
           message = "BlackHoof has full control of the Ocean<br>Use !raid Sector 2 or !raid Ocean";
         }
-      } else if ([3, 4, 6, 7].includes(sectorNumber)) {
+      } else if ([3, 4].includes(sectorNumber)) {
         if (!isSectorLiberated(2)) {
           message = "Liberate Sector 2 to access";
         } else if (sector3BossLocated) {
-          message = "BOSS LOCATED — USE !challenge boss";
+          message = "BOSS LOCATED — USE !challenge S3";
         } else if (bossCanBeChallenged) {
           message = `BOSS IS WEAK — USE !challenge S${sectorNumber} TO TRY SEIZE POWER!`;
         } else if (meta?.fullEnemyControl) {
           const raidNames = {
             3: "Jungle",
-            4: "North Pole",
-            6: "Swamplands",
-            7: "Red Basin"
+            4: "North Pole"
           };
           message = `Use !raid Sector ${sectorNumber} or !raid ${raidNames[sectorNumber]}`;
+        }
+      } else if (sectorNumber === 6) {
+        if (Number(sectorStates[7]?.bossAlive) !== 0) {
+          message = "Liberate Sector 7 first";
+        }
+      } else if (sectorNumber === 7) {
+        if (Number(sectorStates[2]?.bossAlive) !== 0) {
+          message = "Liberate Sector 2 to access";
         }
       } else if (sectorNumber === 5) {
         if (Number(sectorStates[2]?.bossAlive) !== 0) {
@@ -4348,9 +4384,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       } else if (sectorNumber === 8 || sectorNumber === 9) {
         const prerequisitesCleared = [1, 2, 3, 4, 5, 6, 7]
           .every(isSectorLiberated);
-        message = prerequisitesCleared
-          ? `Use !raid Sector ${sectorNumber}`
-          : "All other sectors must be liberated";
+        message = prerequisitesCleared ? "" : "All other sectors must be liberated";
       } else if (sectorNumber === 10) {
         const worldLiberated = [1, 2, 3, 4, 5, 6, 7, 8, 9]
           .every(isSectorLiberated);
@@ -4437,9 +4471,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
             ${!accessWarning && commandInfo.commands.length ? `
               <div class="sector-card-command-label">Commands</div>
               <div class="sector-tooltip-commands">
-                ${commandInfo.commands.map((command) => `
-                  <span class="sector-tooltip-command">${escapeHtml(command)}</span>
-                `).join("")}
+                ${commandInfo.commands.map((command) => renderBossFightCommandChip(command, 2)).join("")}
               </div>
             ` : ""}
             ${!accessWarning && commandInfo.governorCommands.length ? `
@@ -4553,9 +4585,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
             ${!accessWarning && commandInfo.commands.length ? `
               <div class="sector-card-command-label">Commands</div>
               <div class="sector-tooltip-commands">
-                ${commandInfo.commands.map((command) => `
-                  <span class="sector-tooltip-command">${escapeHtml(command)}</span>
-                `).join("")}
+                ${commandInfo.commands.map((command) => renderBossFightCommandChip(command, 3)).join("")}
               </div>
             ` : ""}
             ${!accessWarning && (commandInfo.governorCommands || []).length ? `
@@ -4576,6 +4606,8 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
     function renderSwamplandsTooltip(region) {
       const meta = getSectorDisplayMeta(sector6State);
       const control = meta.control;
+      const commandInfo = getSectorPanelCommands(region);
+      const accessWarning = renderSectorAccessWarning(6);
       return `
         <article class="sector-card sector-card--swamp">
           <div class="sector-card-main">
@@ -4603,8 +4635,16 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
             </div>
           </div>
           <div class="sector-card-body">
-            <p class="sector-card-description">3Horn is using the Plagueroot-infested Milkers to devastate the area, turning all creatures into monstrosities. Destroy the generators and hunt down the creatures.</p>
-            <div style="margin-top:10px">${renderSectorAccessWarning(6)}</div>
+            <p class="sector-card-description">We need to liberate Sector 7 first and get the schematics needed to forge the Hellfire Gauntlets, so we can burn this place to the ground.</p>
+            ${accessWarning ? `<div style="margin-top:10px">${accessWarning}</div>` : `
+              ${commandInfo.notice ? `<div class="sector-raid-warning" aria-live="polite">${escapeHtml(commandInfo.notice)}</div>` : ""}
+              ${commandInfo.commands?.length ? `
+                <div class="sector-card-command-label">Commands</div>
+                <div class="sector-tooltip-commands">
+                  ${commandInfo.commands.map((command) => renderBossFightCommandChip(command, 6)).join("")}
+                </div>
+              ` : ""}
+            `}
           </div>
         </article>
       `;
@@ -4652,7 +4692,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
             ${commandInfo.commands.length ? `
               <div class="sector-card-command-label">Commands</div>
               <div class="sector-tooltip-commands">
-                ${commandInfo.commands.map((command) => `<span class="sector-tooltip-command">${escapeHtml(command)}</span>`).join("")}
+                ${commandInfo.commands.map((command) => renderBossFightCommandChip(command, 4)).join("")}
               </div>
             ` : ""}
           </div>
@@ -4704,6 +4744,8 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
     function renderRedBasinTooltip(region) {
       const state = sectorStates[7];
       const meta = getSectorDisplayMeta(state);
+      const commandInfo = getSectorPanelCommands(region);
+      const accessWarning = renderSectorAccessWarning(7);
       return `
         <article class="sector-card sector-card--basin">
           <div class="sector-card-main">
@@ -4735,7 +4777,15 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
           </div>
           <div class="sector-card-body">
             <p class="sector-card-description">The Cult Leader rules the Red Basin, drawing power from the hellfire corruption left behind by the demonic invasion. The land remains scorched while the cult guards the old wounds burning beneath its surface.</p>
-            <div style="margin-top:10px">${renderSectorAccessWarning(7)}</div>
+            ${accessWarning ? `<div style="margin-top:10px">${accessWarning}</div>` : `
+              ${commandInfo.notice ? `<div class="sector-raid-warning" aria-live="polite">${escapeHtml(commandInfo.notice)}</div>` : ""}
+              ${commandInfo.commands?.length ? `
+                <div class="sector-card-command-label">Commands</div>
+                <div class="sector-tooltip-commands">
+                  ${commandInfo.commands.map((command) => renderBossFightCommandChip(command, 7)).join("")}
+                </div>
+              ` : ""}
+            `}
           </div>
         </article>
       `;
@@ -4782,6 +4832,8 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       const state = plainsStates[region.number];
       const meta = getSectorDisplayMeta(state);
       const control = meta.control;
+      const commandInfo = getSectorPanelCommands(region);
+      const accessWarning = renderSectorAccessWarning(region.number);
       return `
         <article class="sector-card sector-card--plains">
           <div class="sector-card-main">
@@ -4809,7 +4861,14 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
           </div>
           <div class="sector-card-body">
             <p class="sector-card-description">This here's Hog Country. There are said to be millions of hogs who have made the plains their home. The CowCorp CEO uses them as fodder to protect the Capital.</p>
-            <div style="margin-top:10px">${renderSectorAccessWarning(region.number)}</div>
+            ${accessWarning ? `<div style="margin-top:10px">${accessWarning}</div>` : `
+              ${commandInfo.commands?.length ? `
+                <div class="sector-card-command-label">Commands</div>
+                <div class="sector-tooltip-commands">
+                  ${commandInfo.commands.map((command) => `<span class="sector-tooltip-command">${escapeHtml(command)}</span>`).join("")}
+                </div>
+              ` : ""}
+            `}
           </div>
         </article>
       `;
@@ -4837,7 +4896,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
         2: "sector-card--ocean",
         3: "sector-card--jungle",
         4: "sector-card--north",
-        5: "sector-card--rift",
+        5: "",
         6: "sector-card--swamp",
         7: "sector-card--basin",
         8: "sector-card--plains",
@@ -4851,10 +4910,14 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       const governorCommands = region.number === 1
         ? []
         : [...(commandInfo.governorCommands || [])];
-      if (region.number !== 1 && !governorCommands.some(
-        (command) => command.toLowerCase() === "!safehouse"
-      )) {
-        governorCommands.push("!safehouse");
+      if (region.number !== 1) {
+        ["!safehouse", "!Deputise"].forEach((requiredCommand) => {
+          if (!governorCommands.some(
+            (command) => command.toLowerCase() === requiredCommand.toLowerCase()
+          )) {
+            governorCommands.push(requiredCommand);
+          }
+        });
       }
       const portrait = region.number === 1
         ? `<div class="sector-card-portrait"><img src="heim-head.png" alt="Heimidinger" /></div>`
@@ -4880,7 +4943,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
                   <span class="sector-card-stat-label">Status</span>
                   <span class="sector-card-stat-value" style="color:#76e481">LIBERATED</span>
                 </div>
-                ${renderTroopsStat(region.number)}
+                ${region.number === 5 ? "" : renderTroopsStat(region.number)}
               </div>
               <div class="sector-control-track" aria-hidden="true">
                 <div class="sector-control-fill" style="width:${meta.control}%"></div>
@@ -4923,14 +4986,6 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
         `;
       }
 
-      if (region.id === "landmark-rift-entrance") {
-        return renderRiftlandsTooltip(region);
-      }
-
-      if (region.id === "sector-purple") {
-        return renderRiftlandsTooltip(region);
-      }
-
       const liveState = sectorStates[region.number];
       if (
         liveState &&
@@ -4938,6 +4993,14 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
         !getSectorDisplayMeta(liveState).isEnemy
       ) {
         return renderLiberatedSectorTooltip(region);
+      }
+
+      if (region.id === "landmark-rift-entrance") {
+        return renderRiftlandsTooltip(region);
+      }
+
+      if (region.id === "sector-purple") {
+        return renderRiftlandsTooltip(region);
       }
 
       if (region.id === "sector-ocean") {
@@ -5017,13 +5080,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
             ${commands.length ? `
               <div class="sector-card-command-label">Commands</div>
               <div class="sector-tooltip-commands">
-                ${commands.map((command) => {
-                  const finisher = command === "!finishhim";
-                  const classes = ["sector-tooltip-command"];
-                  if (finisher) classes.push("is-finisher");
-                  if (finisher && !vulnerable) classes.push("is-locked");
-                  return `<span class="${classes.join(" ")}">${escapeHtml(command)}</span>`;
-                }).join("")}
+                ${commands.map((command) => renderBossFightCommandChip(command, region.number)).join("")}
               </div>
             ` : ""}
           </div>
@@ -5154,6 +5211,45 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       `;
     }
 
+    function getBossFightCommand(sectorNumber) {
+      const number = Number(sectorNumber);
+      if (number === 1) return "!finishhim";
+      if ([2, 3, 4].includes(number)) return `!challenge S${number}`;
+      if (number === 6) return "!fundnapalm";
+      if (number === 7) return "!summon";
+      return "";
+    }
+
+    function isBossFightReady(sectorNumber) {
+      const number = Number(sectorNumber);
+      const state = sectorStates[number];
+      const meta = getSectorDisplayMeta(state);
+
+      if (!meta.loaded || !meta.isEnemy || Number(state?.bossAlive) !== 1) {
+        return false;
+      }
+
+      if (number === 3) {
+        const bossStage = Math.max(0, Number(state?.bossStage) || 0);
+        const intel = Math.max(0, Number(state?.intel) || 0);
+        return bossStage === 0 && intel >= 3;
+      }
+
+      return clampControl(state?.enemyControl, meta.control) === 0;
+    }
+
+    function renderBossFightCommandChip(command, sectorNumber, baseClass = "sector-tooltip-command") {
+      const fightCommand = getBossFightCommand(sectorNumber);
+      const isBossFight = Boolean(fightCommand) &&
+        String(command).toLowerCase() === fightCommand.toLowerCase();
+      const classes = [baseClass];
+
+      if (isBossFight) classes.push("is-finisher");
+      if (isBossFight && !isBossFightReady(sectorNumber)) classes.push("is-locked");
+
+      return `<span class="${classes.join(" ")}">${escapeHtml(command)}</span>`;
+    }
+
     function getSector2CommandInfo() {
       const state = sectorStates[2];
       const meta = getSectorDisplayMeta(state);
@@ -5177,7 +5273,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       if (!meta.isEnemy) {
         return {
           commands: ["!TreasureHunt", "!harpoon"],
-          governorCommands: ["!ReleaseTheKraken", "!FishingTax", "!Plunder", "!safehouse"],
+          governorCommands: ["!ReleaseTheKraken", "!FishingTax", "!Plunder", "!safehouse", "!Deputise"],
           notice: ""
         };
       }
@@ -5190,17 +5286,17 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
             "!Plunder",
             "!TreasureHunt",
             "!harpoon",
-            ...(bossIsWeak ? ["!challenge S2"] : [])
+            "!challenge S2"
           ],
           governorCommands: [],
           notice: bossIsWeak
-            ? 'BOSS IS WEAK â€” USE "!challenge S2" TO TRY SEIZE POWER!'
+            ? 'BOSS IS WEAK — USE "!challenge S2" TO TRY SEIZE POWER!'
             : ""
         };
       }
 
       return {
-        commands: ["!raid Sector 2", "!raid Ocean"],
+        commands: ["!raid Sector 2", "!raid Ocean", "!challenge S2"],
         governorCommands: [],
         notice: ""
       };
@@ -5236,7 +5332,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
         if (!meta.isEnemy) {
           return {
             commands: ["!explore S3"],
-            governorCommands: ["!snipe", "!safehouse", "!hitsquad"],
+            governorCommands: ["!snipe", "!safehouse", "!hitsquad", "!Deputise"],
             notice: ""
           };
         }
@@ -5248,8 +5344,8 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
 
         if (bossStage === 0 && intel >= 3 && bossAlive) {
           return {
-            commands: ["!challenge boss"],
-            notice: 'BOSS LOCATED — USE "!challenge boss"'
+            commands: ["!challenge S3"],
+            notice: 'BOSS LOCATED — USE "!challenge S3"'
           };
         }
 
@@ -5262,7 +5358,8 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
               "!explore S3",
               "!uav",
               "!protect",
-              ...(bossStage >= 2 || intel >= 6 ? ["!fundmuke"] : [])
+              ...(bossStage >= 2 || intel >= 6 ? ["!fundmuke"] : []),
+              "!challenge S3"
             ],
             notice: bossStage >= 2
               ? `MIICBM FUNDS: ${Math.max(0, Number(state.miicbmFunds) || 0).toLocaleString()} / 250M`
@@ -5271,7 +5368,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
         }
 
         return {
-          commands: ["!raid Sector 3", "!raid Jungle"],
+          commands: ["!raid Sector 3", "!raid Jungle", "!challenge S3"],
           notice: ""
         };
       }
@@ -5296,13 +5393,87 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
         if (!meta.isEnemy) {
           return {
             commands: ["!forge AI", "!upload / !download"],
-            governorCommands: ["!synths", "!reconfigure", "!safehouse"],
+            governorCommands: ["!synths", "!reconfigure", "!safehouse", "!Deputise"],
             notice: ""
           };
         }
 
         return {
-          commands: ["!forge EMP", "!attack S4", "!upload / !download"],
+          commands: ["!forge EMP", "!attack S4", "!upload / !download", "!challenge S4"],
+          governorCommands: [],
+          notice: ""
+        };
+      }
+
+      if (sectorNumber === 5) {
+        if (!meta.isEnemy) {
+          return {
+            commands: ["!commune"],
+            governorCommands: ["!shroudtouched", "!safehouse", "!Deputise"],
+            notice: ""
+          };
+        }
+        if (Number(sectorStates[2]?.bossAlive) !== 0) {
+          return {
+            commands: [],
+            governorCommands: [],
+            notice: "Liberate S2 to access"
+          };
+        }
+        return {
+          commands: [],
+          governorCommands: [],
+          notice: "ERROR // R1FT-ACCE55-C0RRUPTED // SEEK THE RIFT"
+        };
+      }
+
+      if (sectorNumber === 6) {
+        if (!meta.isEnemy) {
+          return {
+            commands: ["!hunt s6"],
+            governorCommands: ["!plaugeroot", "!safehouse", "!Deputise"],
+            notice: ""
+          };
+        }
+        if (Number(sectorStates[7]?.bossAlive) !== 0) {
+          return {
+            commands: [],
+            governorCommands: [],
+            notice: "Liberate Sector 7 first"
+          };
+        }
+        return {
+          commands: ["!burn", "!scorch", "!napalm", "!consume", "!hunt s6", "!fundnapalm"],
+          governorCommands: [],
+          notice: ""
+        };
+      }
+
+      if (sectorNumber === 7) {
+        if (!meta.isEnemy) {
+          return {
+            commands: ["!catch", "!pilgrimage"],
+            governorCommands: [
+              "!hex",
+              "!divinelight",
+              "!hellblast",
+              "!summon",
+              "!smite",
+              "!safehouse",
+              "!Deputise"
+            ],
+            notice: ""
+          };
+        }
+        if (Number(sectorStates[2]?.bossAlive) !== 0) {
+          return {
+            commands: [],
+            governorCommands: [],
+            notice: "Liberate Sector 2 to access"
+          };
+        }
+        return {
+          commands: ["!convert", "!pilgrimage", "!sacrifice", "!divinelight", "!summon"],
           governorCommands: [],
           notice: ""
         };
@@ -5311,12 +5482,12 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       if (!meta.isEnemy) {
         return {
           commands: [],
-          governorCommands: ["!safehouse"],
+          governorCommands: ["!safehouse", "!Deputise"],
           notice: ""
         };
       }
 
-      if ([3, 4, 6, 7].includes(sectorNumber)) {
+      if ([3, 4].includes(sectorNumber)) {
         if (!isSectorLiberated(2)) {
           return { commands: [], notice: "Liberate Sector 2 to access" };
         }
@@ -5341,25 +5512,16 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
         };
       }
 
-      if (sectorNumber === 5) {
-        if (Number(sectorStates[2]?.bossAlive) !== 0) {
-          return {
-            commands: [],
-            notice: "Liberate S2 to access"
-          };
-        }
-        return {
-          commands: [],
-          notice: "ERROR // R1FT-ACCE55-C0RRUPTED // SEEK THE RIFT"
-        };
-      }
-
       if (sectorNumber === 8 || sectorNumber === 9) {
         const prerequisitesCleared = [1, 2, 3, 4, 5, 6, 7]
           .every(isSectorLiberated);
-        return prerequisitesCleared
-          ? { commands: [`!raid Sector ${sectorNumber}`], notice: "" }
-          : { commands: [], notice: "All other sectors must be liberated" };
+        if (!prerequisitesCleared) {
+          return { commands: [], notice: "All other sectors must be liberated" };
+        }
+        const enemyControl = clampControl(state.enemyControl, meta.control);
+        return enemyControl < 100
+          ? { commands: ["!hog"], notice: "" }
+          : { commands: [], notice: "" };
       }
 
       if (sectorNumber === 10) {
@@ -5379,7 +5541,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       const panel = getSectorPanelState(region);
       const commandInfo = getSectorPanelCommands(region);
       const isHeimClaim = region.number === 1 && panel.liberated;
-      const isShroudSector = region.number === 5;
+      const isShroudSector = region.number === 5 && display.isEnemy;
       const leaderLabel = isShroudSector
         ? "??//5H-R0UD"
         : display.isEnemy ? "Sector Boss" : "Sector Gov";
@@ -5420,9 +5582,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
             <div class="sector-command-detail-label">Commands</div>
             ${commandInfo.commands.length ? `
               <div class="sector-command-detail-command-list">
-                ${commandInfo.commands.map((command) => `
-                  <span class="sector-command-detail-command">${escapeHtml(command)}</span>
-                `).join("")}
+                ${commandInfo.commands.map((command) => renderBossFightCommandChip(command, region.number, "sector-command-detail-command")).join("")}
               </div>
             ` : ""}
             ${commandInfo.notice ? `
@@ -5831,8 +5991,8 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       const hasHellGauntlets = normalizeEnabled(
         stats.hellGauntlets ?? stats.hellfireGauntlets
       );
-      hellGauntlets.textContent = hasHellGauntlets ? "OWNED" : "NOT OWNED";
-      hellGauntlets.style.color = hasHellGauntlets ? "#76e481" : "#ff6874";
+      hellGauntlets.textContent = hasHellGauntlets ? "YES" : "-";
+      hellGauntlets.style.color = hasHellGauntlets ? "#76e481" : "";
       document.getElementById("pc-bio").textContent = stats.bio || "Registered citizen of the New World.";
 
       const weapons = Array.isArray(stats.specialWeapons) ? stats.specialWeapons : (Array.isArray(stats.weapons) ? stats.weapons : []);
@@ -8027,7 +8187,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
           <div class="pc-stats">
             <div class="pc-stat-line">Level <b id="pc-level">-</b></div><div class="pc-stat-line">Milkers <b id="pc-milkers">-</b></div>
             <div class="pc-stat-line">Troops <b id="pc-troops">-</b></div><div class="pc-stat-line">Boat <b id="pc-boat">Dinghy</b></div>
-            <div class="pc-stat-line">AI Active <b id="pc-ai-active">-</b></div><div class="pc-stat-line pc-hell-gauntlets">Hellfire Gauntlets <b id="pc-hell-gauntlets">NOT OWNED</b></div>
+            <div class="pc-stat-line">AI Active <b id="pc-ai-active">-</b></div><div class="pc-stat-line pc-hell-gauntlets">Hellfire Gauntlets <b id="pc-hell-gauntlets">-</b></div>
           </div>
           <div class="pc-special-row"><div class="pc-special-icon" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M8 39l31-17 7 4-31 18zM36 24l3-9 6 1 1 10M20 38l-2 12M25 35l7 8M12 43l-4 8M42 20l8-5 5 2-9 8"/></svg></div><div class="pc-special-copy"><strong>UNIQUE WEAPON:</strong><span id="pc-unique-weapon">-</span></div></div>
           <div class="pc-special-row"><div class="pc-special-icon" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M23 8h18v8l5 8v31H18V24l5-8zM23 17h18M24 31h16M24 39h16"/></svg></div><div class="pc-special-copy"><strong>UNIQUE TRAIT:</strong><span id="pc-unique-trait">-</span></div></div>
