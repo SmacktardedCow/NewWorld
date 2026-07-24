@@ -1511,8 +1511,8 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
     .pc-stat-line { display:grid; grid-template-columns:minmax(58px,auto) minmax(0,1fr); gap:7px; align-items:center; min-height:36px; padding:7px 9px; border-right:2px solid var(--pc-accent); border-bottom:2px solid var(--pc-accent); background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(0,0,0,.16)); color:#fff; font-family:Impact,Haettenschweiler,"Arial Narrow Bold",sans-serif; font-size:12px; letter-spacing:.025em; text-transform:uppercase; }
     .pc-stat-line:nth-child(even) { padding-left:9px; }
     .pc-stat-line b { min-width:0; padding:0; color:#fff; font-family:"Arial Narrow",Arial,sans-serif; font-size:10px; font-weight:900; overflow-wrap:normal; white-space:nowrap; text-align:right; }
-    .pc-stat-line.pc-hell-gauntlets { grid-template-columns:1fr; gap:1px; align-items:center; }
-    .pc-stat-line.pc-hell-gauntlets b { color:var(--pc-accent); font-size:9px; text-align:left; }
+    .pc-stat-line.pc-milk-crystals { grid-template-columns:1fr; gap:1px; align-items:center; }
+    .pc-stat-line.pc-milk-crystals b { color:var(--pc-accent); font-size:9px; text-align:left; }
     .pc-special-row { display:grid; grid-template-columns:59px minmax(0,1fr); min-height:52px; border-top:1px solid var(--pc-accent); }
     .pc-special-icon { display:flex; align-items:center; justify-content:center; border-right:1px solid var(--pc-accent); background:#050505; }
     .pc-special-icon svg { width:34px; height:34px; fill:none; stroke:var(--pc-accent-soft); stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; filter:drop-shadow(0 0 5px var(--pc-glow)); }
@@ -3433,11 +3433,12 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
     // https://your-project-id-default-rtdb.firebaseio.com
     const FIREBASE_DB_URL = "https://new-world-a1aed-default-rtdb.europe-west1.firebasedatabase.app";
     const CITIZENS_REFRESH_MS = 30000; // how often the site re-checks for updates
-    const SECTOR_REFRESH_MS = 10000;
+    const SECTOR_REFRESH_MS = 3000;
     const activeEffectState = {
       fishingTax: 0,
       sector3Hitsquad: 0,
       sector4Synths: 0,
+      sector6Plagueroot: 0,
       gambleLimit: 0
     };
 
@@ -3453,7 +3454,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       9: 2640
     });
 
-    const TEST_LIVE_SECTORS = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    const LIVE_SECTORS = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 
     function makeSectorState(number, sectorName, bossName, extras = {}) {
       return {
@@ -3484,7 +3485,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
         hitsquadEnabled: 0,
         fabricators: 0,
         synthsEnabled: 0,
-        loaded: !TEST_LIVE_SECTORS.has(number),
+        loaded: !LIVE_SECTORS.has(number),
         ...extras
       };
     }
@@ -3520,9 +3521,24 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       }),
       10: makeSectorState(10, "The Capital", "CowCorp CEO", {
         garrisonedTroops: 10000,
+        enemyControl: 1000,
+        control: 1000,
+        displayedControl: 1000,
         objectiveName: "Strongholds",
         objectiveRemaining: 4,
-        objectiveTotal: 4
+        objectiveTotal: 4,
+        capitalUnlocked: 0,
+        capitalPhase: 0,
+        enemyTroopsDefeated: 0,
+        capitalStrongholds: [],
+        strongholdsDestroyed: 0,
+        strongholdsBuilt: 0,
+        chairFund: 0,
+        chairFundTarget: 1000000000,
+        chairReady: 0,
+        finalFightActive: 0,
+        finalFightComplete: 0,
+        finalFightHits: 0
       })
     };
 
@@ -3892,16 +3908,17 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       const fishingTaxActive = normalizeEnabled(activeEffectState.fishingTax);
       const sector3HitsquadActive = normalizeEnabled(activeEffectState.sector3Hitsquad);
       const sector4SynthsActive = normalizeEnabled(activeEffectState.sector4Synths);
+      const sector6PlaguerootActive = normalizeEnabled(activeEffectState.sector6Plagueroot);
       const gambleLimit = Math.max(0, Number(activeEffectState.gambleLimit) || 0);
       const effects = [
-        {
+        ...(fishingTaxActive ? [{
           sector: 2,
           source: "Sector 2 • Ocean Biome",
           name: "Fishing Tax",
-          status: fishingTaxActive ? "Active" : "Inactive",
-          statusClass: fishingTaxActive ? "active" : "",
+          status: "Active",
+          statusClass: "active",
           copy: "50% of Milkers earned are given to the Sector 2 boss."
-        },
+        }] : []),
         ...(sector3HitsquadActive ? [{
           sector: 3,
           source: "Sector 3 • Jungle",
@@ -3918,16 +3935,22 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
           statusClass: "active",
           copy: "Sector 4 Synth units are currently active."
         }] : []),
-        {
+        ...(sector6PlaguerootActive ? [{
+          sector: 6,
+          source: "Sector 6 • Swamplands",
+          name: "Plagueroot",
+          status: "Active",
+          statusClass: "active",
+          copy: "The Plagueroot is currently spreading through the New World."
+        }] : []),
+        ...(gambleLimit > 0 ? [{
           sector: 10,
           source: "Sector 10 • The Capital",
           name: "Gamble Limit",
-          status: gambleLimit > 0 ? `Limit ${gambleLimit}` : "No Limit",
-          statusClass: gambleLimit > 0 ? "limit" : "",
-          copy: gambleLimit > 0
-            ? `Citizens may only gamble ${gambleLimit.toLocaleString()} times a day.`
-            : "Citizens currently have no daily gamble limit."
-        }
+          status: `Active • Limit ${gambleLimit}`,
+          statusClass: "active",
+          copy: `A ${gambleLimit.toLocaleString()}-gamble daily limit is active.`
+        }] : [])
       ].sort((a, b) => a.sector - b.sector);
 
       list.innerHTML = effects.map((effect, index) => `
@@ -3945,15 +3968,16 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       `).join("");
     }
 
-    function clampControl(value, fallback = 0) {
+    function clampControl(value, fallback = 0, maximum = 100) {
       const numericValue = Number(value);
       if (!Number.isFinite(numericValue)) return fallback;
-      return Math.max(0, Math.min(100, numericValue));
+      return Math.max(0, Math.min(maximum, numericValue));
     }
 
     function applyLiveSectorSnapshot(sectorNumber, data) {
       const state = sectorStates[sectorNumber];
-      if (!state || !data || !TEST_LIVE_SECTORS.has(sectorNumber)) return;
+      if (!state || !data || !LIVE_SECTORS.has(sectorNumber)) return;
+      const controlMaximum = sectorNumber === 10 ? 1000 : 100;
 
       let bossAlive = data.bossAlive == null
         ? Number(state.bossAlive) === 1
@@ -3967,10 +3991,17 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       let displayedControl = clampControl(
         data.displayedControl ?? data.control,
         bossAlive
-          ? clampControl(data.enemyControl, state.enemyControl)
+          ? clampControl(data.enemyControl, state.enemyControl, controlMaximum)
           : clampControl(data.liberatedControl, state.liberatedControl)
+        ,
+        controlMaximum
       );
       if (sectorNumber === 5 && !bossAlive) displayedControl = 100;
+      if (sectorNumber === 6) {
+        displayedControl = bossAlive
+          ? clampControl(data.enemyControl, state.enemyControl)
+          : clampControl(data.liberatedControl, state.liberatedControl);
+      }
 
       state.sectorName = String(data.sectorName || state.sectorName);
       const incomingBossName = String(data.bossName || "").trim();
@@ -3985,9 +4016,19 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
           )
           ? "MechaCow"
           : String(incomingBossName || state.bossName);
+      if (sectorNumber === 8 || sectorNumber === 9) {
+        state.ownBossAlive = bossAlive ? 1 : 0;
+        state.ownBossName = state.bossName;
+        state.activeHogTwinSector = sectorNumber;
+        state.hogsDefeated = Math.max(0, Number(data.hogsDefeated) || 0);
+      }
       state.bossAlive = bossAlive ? 1 : 0;
       state.bossDefeated = Number(data.bossDefeated) === 1 || !bossAlive ? 1 : 0;
-      state.enemyControl = clampControl(data.enemyControl, state.enemyControl);
+      state.enemyControl = clampControl(
+        data.enemyControl,
+        state.enemyControl,
+        controlMaximum
+      );
       state.liberatedControl = sectorNumber === 5 && !bossAlive
         ? 100
         : clampControl(data.liberatedControl, state.liberatedControl);
@@ -4084,6 +4125,51 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
         state.synthsEnabled = normalizeEnabled(data.synthsEnabled) ? 1 : 0;
         activeEffectState.sector4Synths = state.synthsEnabled;
       }
+      if (sectorNumber === 6) {
+        state.plaguerootGenerators = Math.max(
+          0,
+          Number(data.plaguerootGenerators ?? data.objectiveRemaining) || 0
+        );
+        state.objectiveName = "Plaugeroot Generators";
+        state.objectiveRemaining = state.plaguerootGenerators;
+        state.objectiveTotal = 2;
+        state.plaguerootActive = normalizeEnabled(data.plaguerootActive) ? 1 : 0;
+        activeEffectState.sector6Plagueroot = state.plaguerootActive;
+      }
+      if (sectorNumber === 10) {
+        state.capitalUnlocked = normalizeEnabled(data.capitalUnlocked) ? 1 : 0;
+        state.capitalPhase = Math.max(0, Number(data.capitalPhase) || 0);
+        state.enemyTroopsDefeated = Math.max(
+          0,
+          Number(data.enemyTroopsDefeated) || 0
+        );
+        state.capitalStrongholds = Array.isArray(data.capitalStrongholds)
+          ? data.capitalStrongholds.map((stronghold, index) => ({
+              district: Math.max(1, Number(stronghold?.district) || index + 1),
+              enemy: normalizeEnabled(stronghold?.enemy) ? 1 : 0,
+              player: normalizeEnabled(stronghold?.player) ? 1 : 0,
+              fund: Math.max(0, Number(stronghold?.fund) || 0),
+              fundTarget: Math.max(1, Number(stronghold?.fundTarget) || 200000000)
+            }))
+          : [];
+        state.strongholdsDestroyed = Math.max(
+          0,
+          Number(data.strongholdsDestroyed) || 0
+        );
+        state.strongholdsBuilt = Math.max(
+          0,
+          Number(data.strongholdsBuilt) || 0
+        );
+        state.chairFund = Math.max(0, Number(data.chairFund) || 0);
+        state.chairFundTarget = Math.max(
+          1,
+          Number(data.chairFundTarget) || 1000000000
+        );
+        state.chairReady = normalizeEnabled(data.chairReady) ? 1 : 0;
+        state.finalFightActive = normalizeEnabled(data.finalFightActive) ? 1 : 0;
+        state.finalFightComplete = normalizeEnabled(data.finalFightComplete) ? 1 : 0;
+        state.finalFightHits = Math.max(0, Number(data.finalFightHits) || 0);
+      }
       state.loaded = true;
 
       const region = worldRegions.find((item) => item.number === sectorNumber);
@@ -4094,11 +4180,106 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       }
     }
 
+    function reconcileHogTwinStates() {
+      const west = sectorStates[8];
+      const east = sectorStates[9];
+      if (west?.loaded === false || east?.loaded === false) return;
+
+      const westAlive = Number(west.ownBossAlive) === 1;
+      const eastAlive = Number(east.ownBossAlive) === 1;
+      const bothDefeated = !westAlive && !eastAlive;
+      const tiedEnemyControl = Math.min(
+        clampControl(west.enemyControl, 100),
+        clampControl(east.enemyControl, 100)
+      );
+      const tiedLiberatedControl = Math.min(
+        clampControl(west.liberatedControl, 0),
+        clampControl(east.liberatedControl, 0)
+      );
+      const sharedHogsDefeated = Math.max(
+        Number(west.hogsDefeated) || 0,
+        Number(east.hogsDefeated) || 0
+      );
+
+      [west, east].forEach((state) => {
+        state.enemyControl = tiedEnemyControl;
+        state.liberatedControl = tiedLiberatedControl;
+        state.hogsDefeated = sharedHogsDefeated;
+      });
+
+      if (bothDefeated) {
+        [west, east].forEach((state) => {
+          state.bossAlive = 0;
+          state.bossDefeated = 1;
+          state.controlOwner = "liberated";
+          state.controlLabel = "Liberated Control";
+          state.control = tiedLiberatedControl;
+          state.displayedControl = tiedLiberatedControl;
+          state.displayedLeader = state.governor || "Unclaimed";
+          state.displayedLeaderRole = state.governor ? "Governor" : "Unclaimed";
+          state.activeHogTwinSector = state.sector;
+        });
+      } else if (westAlive !== eastAlive) {
+        const survivingState = westAlive ? west : east;
+        const survivingSector = westAlive ? 8 : 9;
+        const survivingName = survivingState.ownBossName ||
+          (westAlive ? "Hog Twin - Blue" : "Hog Twin - Purple");
+
+        [west, east].forEach((state) => {
+          state.bossAlive = 1;
+          state.bossDefeated = 0;
+          state.bossName = survivingName;
+          state.controlOwner = "enemy";
+          state.controlLabel = "Enemy Control";
+          state.control = tiedEnemyControl;
+          state.displayedControl = tiedEnemyControl;
+          state.displayedLeader = survivingName;
+          state.displayedLeaderRole = "Boss";
+          state.activeHogTwinSector = survivingSector;
+        });
+      } else {
+        [west, east].forEach((state) => {
+          state.bossAlive = 1;
+          state.bossDefeated = 0;
+          state.bossName = state.ownBossName || state.bossName;
+          state.controlOwner = "enemy";
+          state.controlLabel = "Enemy Control";
+          state.control = tiedEnemyControl;
+          state.displayedControl = tiedEnemyControl;
+          state.displayedLeader = state.bossName;
+          state.displayedLeaderRole = "Boss";
+          state.activeHogTwinSector = state.sector;
+        });
+      }
+
+      [8, 9].forEach((sectorNumber) => {
+        const state = sectorStates[sectorNumber];
+        const region = worldRegions.find((item) => item.number === sectorNumber);
+        if (!region) return;
+        region.control = state.displayedControl;
+        region.boss = state.bossName;
+        region.bossDefeated = state.bossDefeated;
+      });
+    }
+
+    function getLiveSectorSnapshot(sectors, sectorNumber) {
+      if (!sectors) return null;
+      const direct = sectors[String(sectorNumber)] ?? sectors[sectorNumber];
+      if (direct && Number(direct.sector) === sectorNumber) return direct;
+
+      const snapshots = Array.isArray(sectors)
+        ? sectors
+        : Object.values(sectors);
+      return snapshots.find(
+        (snapshot) => snapshot && Number(snapshot.sector) === sectorNumber
+      ) || direct || null;
+    }
+
     async function fetchSiteSectors() {
       if (FIREBASE_DB_URL.includes("YOUR-PROJECT-ID")) return;
       try {
         const res = await fetch(
-          `${FIREBASE_DB_URL}/users/__site.json`,
+          `${FIREBASE_DB_URL}/users/__site.json?refresh=${Date.now()}`,
           { cache: "no-store" }
         );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -4115,12 +4296,13 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
             ? 10
             : incomingGambleLimit;
         }
-        TEST_LIVE_SECTORS.forEach((sectorNumber) => {
+        LIVE_SECTORS.forEach((sectorNumber) => {
           applyLiveSectorSnapshot(
             sectorNumber,
-            sectors[String(sectorNumber)] || sectors[sectorNumber]
+            getLiveSectorSnapshot(sectors, sectorNumber)
           );
         });
+        reconcileHogTwinStates();
         renderActiveEffects();
 
         if (currentTab === "sectors") renderSectorsPanel();
@@ -4166,10 +4348,16 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
         `;
       }
       if (sectorNumber === 6) {
+        const meta = getSectorDisplayMeta(state);
+        const corruption = !meta.isEnemy || meta.control <= 33
+          ? { value: "CONTROLLED", color: "#76e481" }
+          : meta.control <= 66
+            ? { value: "RAVAGED", color: "#ffad52" }
+            : { value: "OVERWHELMING", color: "#ff3349" };
         return `
           <div class="sector-card-stat">
             <span class="sector-card-stat-label">Corruption State</span>
-            <span class="sector-card-stat-value" style="color:#ff3349">OVERWHELMING</span>
+            <span class="sector-card-stat-value" style="color:${corruption.color}">${corruption.value}</span>
           </div>
         `;
       }
@@ -4193,7 +4381,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
         return `
           <div class="sector-card-stat">
             <span class="sector-card-stat-label">Hogs</span>
-            <span class="sector-card-stat-value">AT LEAST A COUPLE MIL</span>
+            <span class="sector-card-stat-value">MILLIONS</span>
           </div>
         `;
       }
@@ -4201,7 +4389,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
         return `
           <div class="sector-card-stat">
             <span class="sector-card-stat-label">Troops</span>
-            <span class="sector-card-stat-value">10K</span>
+            <span class="sector-card-stat-value" style="color:#ff3349">UNKNOWN</span>
           </div>
         `;
       }
@@ -4252,8 +4440,13 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
 
     function getSectorDisplayMeta(state) {
       const loaded = state.loaded !== false;
+      const controlMaximum = Number(state.sector) === 10 ? 1000 : 100;
       const control = loaded
-        ? clampControl(state.displayedControl ?? state.control, 100)
+        ? clampControl(
+            state.displayedControl ?? state.control,
+            controlMaximum,
+            controlMaximum
+          )
         : 0;
       const isEnemy = loaded &&
         state.controlOwner !== "liberated" &&
@@ -4279,7 +4472,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       let statusLabel = "SYNCING";
       let statusColor = "#ffc26b";
       if (loaded && isEnemy) {
-        statusLabel = control === 100
+        statusLabel = control >= controlMaximum
           ? "FULL CONTROL"
           : "UNDER SIEGE";
         statusColor = "#ff4a59";
@@ -4298,7 +4491,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
         statusLabel,
         statusText: loaded ? `${statusLabel} ${control}%` : statusLabel,
         statusColor,
-        fullEnemyControl: isEnemy && control === 100
+        fullEnemyControl: isEnemy && control >= controlMaximum
       };
     }
 
@@ -4386,11 +4579,11 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
           .every(isSectorLiberated);
         message = prerequisitesCleared ? "" : "All other sectors must be liberated";
       } else if (sectorNumber === 10) {
-        const worldLiberated = [1, 2, 3, 4, 5, 6, 7, 8, 9]
-          .every(isSectorLiberated);
-        message = worldLiberated
-          ? "Use !raid Sector 10 or !raid Capital"
-          : "All sectors need to be liberated";
+        message = !areHogTwinBossesDefeated()
+          ? "Defeat both Hog Twins to access the Capital map"
+          : Number(sectorStates[10]?.capitalUnlocked) === 1
+            ? ""
+            : "The Capital campaign has not been unlocked";
       }
 
       if (!message) return "";
@@ -4635,7 +4828,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
             </div>
           </div>
           <div class="sector-card-body">
-            <p class="sector-card-description">We need to liberate Sector 7 first and get the schematics needed to forge the Hellfire Gauntlets, so we can burn this place to the ground.</p>
+            <p class="sector-card-description">3Horn is using Plagueroot Generators to corrupt the swamps and transfigure its creatures into monstrosities. We need to liberate Sector 7 first and get the schematics needed to forge the Hellfire Gauntlets, so we can burn this place to the ground.</p>
             ${accessWarning ? `<div style="margin-top:10px">${accessWarning}</div>` : `
               ${commandInfo.notice ? `<div class="sector-raid-warning" aria-live="polite">${escapeHtml(commandInfo.notice)}</div>` : ""}
               ${commandInfo.commands?.length ? `
@@ -4794,6 +4987,8 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
     function renderCapitalTooltip(region) {
       const state = sectorStates[10];
       const meta = getSectorDisplayMeta(state);
+      const commandInfo = getSectorPanelCommands(region);
+      const accessWarning = renderSectorAccessWarning(10);
       return `
         <article class="sector-card sector-card--capital">
           <div class="sector-card-main">
@@ -4813,7 +5008,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
                 ${renderTroopsStat(10)}
               </div>
               <div class="sector-control-track" aria-hidden="true">
-                <div class="sector-control-fill" style="width:${meta.control}%"></div>
+                <div class="sector-control-fill" style="width:${Math.min(100, meta.control / 10)}%"></div>
               </div>
             </div>
             <div class="sector-card-portrait">
@@ -4822,7 +5017,14 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
           </div>
           <div class="sector-card-body">
             <p class="sector-card-description">The capital of the New World, centre of trade and power. It has fallen and been rebuilt countless times, each more grand than the last.</p>
-            <div style="margin-top:10px">${renderSectorAccessWarning(10)}</div>
+            ${accessWarning ? `<div style="margin-top:10px">${accessWarning}</div>` : `
+              ${commandInfo.commands?.length ? `
+                <div class="sector-card-command-label">Commands</div>
+                <div class="sector-tooltip-commands">
+                  ${commandInfo.commands.map((command) => renderBossFightCommandChip(command, 10)).join("")}
+                </div>
+              ` : ""}
+            `}
           </div>
         </article>
       `;
@@ -4834,6 +5036,9 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       const control = meta.control;
       const commandInfo = getSectorPanelCommands(region);
       const accessWarning = renderSectorAccessWarning(region.number);
+      const activeTwinSector = [8, 9].includes(Number(state.activeHogTwinSector))
+        ? Number(state.activeHogTwinSector)
+        : region.number;
       return `
         <article class="sector-card sector-card--plains">
           <div class="sector-card-main">
@@ -4856,7 +5061,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
               </div>
             </div>
             <div class="sector-card-portrait">
-              <img src="${region.number === 8 ? "hog-1.png" : "hog-2.png"}" alt="" />
+              <img src="${activeTwinSector === 8 ? "hog-1.png" : "hog-2.png"}" alt="" />
             </div>
           </div>
           <div class="sector-card-body">
@@ -5091,8 +5296,13 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
     function getSectorPanelState(region) {
       const state = sectorStates[region.number];
       const loaded = state ? state.loaded !== false : true;
+      const controlMaximum = region.number === 10 ? 1000 : 100;
       const control = loaded && state
-        ? clampControl(state.displayedControl ?? state.control, 100)
+        ? clampControl(
+            state.displayedControl ?? state.control,
+            controlMaximum,
+            controlMaximum
+          )
         : 0;
       const bossDefeated = state
         ? Number(state.bossDefeated) === 1
@@ -5217,6 +5427,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       if ([2, 3, 4].includes(number)) return `!challenge S${number}`;
       if (number === 6) return "!fundnapalm";
       if (number === 7) return "!summon";
+      if (number === 10) return "!stronghold";
       return "";
     }
 
@@ -5409,7 +5620,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
         if (!meta.isEnemy) {
           return {
             commands: ["!commune"],
-            governorCommands: ["!shroudtouched", "!safehouse", "!Deputise"],
+            governorCommands: ["!shroudtouched", "!formless", "!safehouse", "!Deputise"],
             notice: ""
           };
         }
@@ -5430,7 +5641,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       if (sectorNumber === 6) {
         if (!meta.isEnemy) {
           return {
-            commands: ["!hunt s6"],
+            commands: ["!hunt s6", "!root", "!consume"],
             governorCommands: ["!plaugeroot", "!safehouse", "!Deputise"],
             notice: ""
           };
@@ -5452,7 +5663,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       if (sectorNumber === 7) {
         if (!meta.isEnemy) {
           return {
-            commands: ["!catch", "!pilgrimage"],
+            commands: ["!catch", "!pilgrimage", "!convert"],
             governorCommands: [
               "!hex",
               "!divinelight",
@@ -5477,6 +5688,27 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
           governorCommands: [],
           notice: ""
         };
+      }
+
+      if (sectorNumber === 8 || sectorNumber === 9) {
+        if (!meta.isEnemy) {
+          return {
+            commands: ["!hograce", "!hog"],
+            governorCommands: ["!releasethehogs", "!safehouse", "!Deputise"],
+            notice: ""
+          };
+        }
+
+        const prerequisitesCleared = [1, 2, 3, 4, 5, 6, 7]
+          .every(isSectorLiberated);
+        if (!prerequisitesCleared) {
+          return { commands: [], notice: "All other sectors must be liberated" };
+        }
+
+        const hogsDefeated = Math.max(0, Number(state.hogsDefeated) || 0);
+        return hogsDefeated > 10000
+          ? { commands: ["!hog", "!hog", "!hog", "!hog", "!hog"], notice: "" }
+          : { commands: [`!raid S${sectorNumber}`], notice: "" };
       }
 
       if (!meta.isEnemy) {
@@ -5512,23 +5744,23 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
         };
       }
 
-      if (sectorNumber === 8 || sectorNumber === 9) {
-        const prerequisitesCleared = [1, 2, 3, 4, 5, 6, 7]
-          .every(isSectorLiberated);
-        if (!prerequisitesCleared) {
-          return { commands: [], notice: "All other sectors must be liberated" };
-        }
-        const enemyControl = clampControl(state.enemyControl, meta.control);
-        return enemyControl < 100
-          ? { commands: ["!hog"], notice: "" }
-          : { commands: [], notice: "" };
-      }
-
       if (sectorNumber === 10) {
         const worldLiberated = [1, 2, 3, 4, 5, 6, 7, 8, 9]
           .every(isSectorLiberated);
         return worldLiberated
-          ? { commands: ["!raid Sector 10", "!raid Capital"], notice: "" }
+          ? {
+              commands: [
+                "!raid S10",
+                "!artilery",
+                "!airsupport",
+                "!superweapon",
+                "!heldive",
+                "!espionage",
+                "!import / !export",
+                "!stronghold"
+              ],
+              notice: ""
+            }
           : { commands: [], notice: "All sectors need to be liberated" };
       }
 
@@ -5647,6 +5879,14 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
         9: { src: "hog-2.png", alt: "Hog Twin Purple", className: "" },
         10: { src: "boss-cowcorp-ceo-v4.png", alt: "CowCorp CEO", className: "" }
       };
+      if (region.number === 8 || region.number === 9) {
+        const activeTwinSector = [8, 9].includes(Number(state.activeHogTwinSector))
+          ? Number(state.activeHogTwinSector)
+          : region.number;
+        bossPortraits[region.number] = activeTwinSector === 8
+          ? { src: "hog-1.png", alt: "Hog Twin Blue", className: "" }
+          : { src: "hog-2.png", alt: "Hog Twin Purple", className: "" };
+      }
       const boss = bossPortraits[region.number];
       if (!boss) return "";
 
@@ -5987,12 +6227,13 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       document.getElementById("pc-troops").textContent = stats.troops ?? 0;
       document.getElementById("pc-boat").textContent = "Dinghy";
       document.getElementById("pc-ai-active").textContent = formatPlayerCardFlag(stats.aiActive ?? stats.ai);
-      const hellGauntlets = document.getElementById("pc-hell-gauntlets");
-      const hasHellGauntlets = normalizeEnabled(
-        stats.hellGauntlets ?? stats.hellfireGauntlets
-      );
-      hellGauntlets.textContent = hasHellGauntlets ? "YES" : "-";
-      hellGauntlets.style.color = hasHellGauntlets ? "#76e481" : "";
+      const milkCrystals = document.getElementById("pc-milk-crystals");
+      const rawMilkCrystalCount = Number(stats.milkCrystals);
+      const milkCrystalCount = Number.isFinite(rawMilkCrystalCount)
+        ? Math.max(0, Math.floor(rawMilkCrystalCount))
+        : 0;
+      milkCrystals.textContent = milkCrystalCount.toLocaleString();
+      milkCrystals.style.color = milkCrystalCount > 0 ? "#76e481" : "";
       document.getElementById("pc-bio").textContent = stats.bio || "Registered citizen of the New World.";
 
       const weapons = Array.isArray(stats.specialWeapons) ? stats.specialWeapons : (Array.isArray(stats.weapons) ? stats.weapons : []);
@@ -7268,7 +7509,16 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
 
     let riftEntryTimer = null;
     let capitalEntryTimer = null;
-    const CAPITAL_DISTRICTS_TEST_UNLOCKED = true;
+
+    function areHogTwinBossesDefeated() {
+      return Number(sectorStates[8]?.bossAlive) === 0 &&
+        Number(sectorStates[9]?.bossAlive) === 0;
+    }
+
+    function isCapitalAvailable() {
+      return areHogTwinBossesDefeated() &&
+        Number(sectorStates[10]?.capitalUnlocked) === 1;
+    }
 
     function enterRift() {
       if (Number(sectorStates[2]?.bossAlive) !== 0) return;
@@ -7284,7 +7534,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
     }
 
     function enterCapitalDistricts() {
-      if (!CAPITAL_DISTRICTS_TEST_UNLOCKED) return;
+      if (!isCapitalAvailable()) return;
       const transition = document.getElementById("capital-entry-transition");
       if (!transition || transition.classList.contains("active")) return;
       globeSpinVelocity.x = 0;
@@ -8187,7 +8437,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
           <div class="pc-stats">
             <div class="pc-stat-line">Level <b id="pc-level">-</b></div><div class="pc-stat-line">Milkers <b id="pc-milkers">-</b></div>
             <div class="pc-stat-line">Troops <b id="pc-troops">-</b></div><div class="pc-stat-line">Boat <b id="pc-boat">Dinghy</b></div>
-            <div class="pc-stat-line">AI Active <b id="pc-ai-active">-</b></div><div class="pc-stat-line pc-hell-gauntlets">Hellfire Gauntlets <b id="pc-hell-gauntlets">-</b></div>
+            <div class="pc-stat-line">AI Active <b id="pc-ai-active">-</b></div><div class="pc-stat-line pc-milk-crystals">Milk Crystals <b id="pc-milk-crystals">-</b></div>
           </div>
           <div class="pc-special-row"><div class="pc-special-icon" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M8 39l31-17 7 4-31 18zM36 24l3-9 6 1 1 10M20 38l-2 12M25 35l7 8M12 43l-4 8M42 20l8-5 5 2-9 8"/></svg></div><div class="pc-special-copy"><strong>UNIQUE WEAPON:</strong><span id="pc-unique-weapon">-</span></div></div>
           <div class="pc-special-row"><div class="pc-special-icon" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M23 8h18v8l5 8v31H18V24l5-8zM23 17h18M24 31h16M24 39h16"/></svg></div><div class="pc-special-copy"><strong>UNIQUE TRAIT:</strong><span id="pc-unique-trait">-</span></div></div>

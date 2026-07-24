@@ -33,6 +33,9 @@
       height: 100%;
       isolation: isolate;
       opacity: 0;
+    }
+
+    .capital-screen.is-authorized {
       animation: revealMap 1.2s 0.25s ease forwards;
     }
 
@@ -73,6 +76,92 @@
     .district-map {
       z-index: 3;
       overflow: visible;
+    }
+
+    .siege-effects {
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      overflow: hidden;
+      pointer-events: none;
+      mix-blend-mode: screen;
+    }
+
+    .siege-explosion {
+      --blast-color: #ff7428;
+      position: absolute;
+      left: var(--x);
+      top: var(--y);
+      width: 8px;
+      height: 8px;
+      transform: translate(-50%, -50%) scale(var(--scale));
+      filter: saturate(1.12);
+    }
+
+    .blast-core,
+    .blast-ring,
+    .blast-smoke {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .blast-core {
+      width: 10px;
+      height: 10px;
+      background: #fff7cb;
+      box-shadow:
+        0 0 4px 1px #fff,
+        0 0 9px 4px #ffd02f,
+        0 0 17px 7px var(--blast-color),
+        0 0 28px 10px rgba(255, 34, 0, .34);
+      animation: blastCore 1.5s cubic-bezier(.16, .76, .25, 1) forwards;
+    }
+
+    .blast-ring {
+      width: 9px;
+      height: 9px;
+      border: 2px solid #ffd75a;
+      box-shadow: 0 0 6px #ff541c, inset 0 0 4px #fff;
+      animation: blastRing 1.35s ease-out forwards;
+    }
+
+    .blast-smoke {
+      width: 14px;
+      height: 14px;
+      background:
+        radial-gradient(circle at 32% 28%, rgba(255, 170, 57, .74), transparent 28%),
+        radial-gradient(circle at 62% 36%, rgba(62, 49, 45, .95), transparent 43%),
+        radial-gradient(circle at 43% 67%, rgba(19, 20, 24, .92), transparent 52%);
+      filter: blur(2px);
+      animation: blastSmoke 2.5s ease-out forwards;
+    }
+
+    .blast-spark {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: var(--length);
+      height: 1px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #fff, #ffd74a 24%, #ff4b17 72%, transparent);
+      box-shadow: 0 0 3px #ff681d;
+      transform-origin: left center;
+      transform: rotate(var(--angle)) translateX(5px) scaleX(.2);
+      opacity: 0;
+      animation: blastSpark 1.1s var(--delay) ease-out forwards;
+    }
+
+    .capital-screen.siege-flash::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      pointer-events: none;
+      background: radial-gradient(circle at var(--flash-x) var(--flash-y), rgba(255, 190, 93, .12), transparent 8%);
+      animation: siegeFlash .48s ease-out forwards;
     }
 
     .district {
@@ -172,6 +261,33 @@
       font-family: Arial, sans-serif;
       font-size: 11px;
       letter-spacing: .16em;
+    }
+
+    .siege-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      padding: 6px 10px;
+      border: 1px solid rgba(255, 65, 72, .48);
+      background: rgba(27, 2, 5, .64);
+      color: #ff6970;
+      font-family: Arial, sans-serif;
+      font-size: 10px;
+      font-weight: 1000;
+      letter-spacing: .22em;
+      box-shadow: 0 0 15px rgba(255, 31, 43, .12);
+      animation: siegeStatusPulse 2.7s ease-in-out infinite;
+    }
+
+    .siege-status::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #ff3844;
+      box-shadow: 0 0 9px #ff2534;
+      animation: siegeBeacon 1.35s steps(2, end) infinite;
     }
 
     .return-button {
@@ -334,22 +450,6 @@
       text-transform: uppercase;
     }
 
-    .test-chip {
-      position: fixed;
-      right: 25px;
-      bottom: 24px;
-      z-index: 10;
-      padding: 8px 11px;
-      border: 1px solid rgba(255, 184, 69, .42);
-      background: rgba(13, 9, 2, .72);
-      color: #ffcf79;
-      font-family: Arial, sans-serif;
-      font-size: 9px;
-      font-weight: 900;
-      letter-spacing: .15em;
-      text-transform: uppercase;
-    }
-
     .screen-fade {
       position: fixed;
       inset: 0;
@@ -367,10 +467,47 @@
       0%, 100% { filter: drop-shadow(0 0 7px rgba(189, 82, 255, .38)); }
       50% { filter: drop-shadow(0 0 20px rgba(189, 82, 255, .9)); }
     }
+    @keyframes blastCore {
+      0% { transform: translate(-50%, -50%) scale(.08); opacity: 0; }
+      8% { opacity: 1; }
+      36% { transform: translate(-50%, -50%) scale(2.1); opacity: .92; }
+      100% { transform: translate(-50%, -50%) scale(3.2); opacity: 0; }
+    }
+    @keyframes blastRing {
+      0% { transform: translate(-50%, -50%) scale(.2); opacity: 0; }
+      12% { opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(5.2); opacity: 0; border-width: 1px; }
+    }
+    @keyframes blastSmoke {
+      0% { transform: translate(-50%, -50%) scale(.25); opacity: 0; }
+      18% { opacity: .92; }
+      100% { transform: translate(-50%, -105%) scale(3.7); opacity: 0; }
+    }
+    @keyframes blastSpark {
+      0% { opacity: 0; transform: rotate(var(--angle)) translateX(5px) scaleX(.2); }
+      16% { opacity: 1; }
+      100% { opacity: 0; transform: rotate(var(--angle)) translateX(var(--distance)) scaleX(1); }
+    }
+    @keyframes siegeFlash {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+    @keyframes siegeStatusPulse {
+      0%, 100% { opacity: .58; }
+      50% { opacity: 1; }
+    }
+    @keyframes siegeBeacon {
+      0%, 44% { opacity: .25; }
+      45%, 100% { opacity: 1; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .siege-explosion { display: none; }
+    }
 
     @media (max-width: 720px) {
       .hud-header { left: 14px; top: 14px; }
-      .hud-subtitle, .test-chip { display: none; }
+      .hud-subtitle { display: none; }
       .return-button { right: 12px; top: 12px; min-width: 0; padding: 10px 12px; }
       .district-card { left: 12px; bottom: 12px; width: calc(100vw - 24px); }
       .ceo-card { width: calc(100vw - 24px); grid-template-columns: 1fr 94px; }
@@ -384,12 +521,14 @@
       <div class="hud-eyebrow">New World // Capital Theatre</div>
       <div class="hud-title">CowCorp Capital</div>
       <div class="hud-subtitle">District control tactical overview</div>
+      <div class="siege-status">Under Siege</div>
     </header>
 
     <button class="return-button" id="return-map" type="button">Return to World</button>
 
     <div class="map-stage">
       <img class="city-art" src="cowcorp-capital-city-v1.png" alt="Bird's-eye view of the CowCorp capital" />
+      <div class="siege-effects" id="siege-effects" aria-hidden="true"></div>
       <svg class="district-map" viewBox="0 0 1664 936" role="group" aria-label="Capital districts">
         <g class="district" tabindex="0" role="button" aria-label="District 1" data-district="1" style="--district-color:#e43e4d">
           <path class="district-edge" d="M832 7 A710 447 0 0 0 122 454 L636 454 A196 136 0 0 1 832 318 Z" />
@@ -420,22 +559,142 @@
     </div>
 
     <section class="district-card" id="district-card" aria-live="polite"></section>
-    <div class="test-chip">Capital access: test override active</div>
   </main>
   <div class="screen-fade" id="screen-fade" aria-hidden="true"></div>
 
   <script>
+    const FIREBASE_DB_URL = "https://new-world-a1aed-default-rtdb.europe-west1.firebasedatabase.app";
+    const STRONGHOLD_FUND_TARGET = 200000000;
+    const CHAIR_FUND_TARGET = 1000000000;
     const districts = {
-      "1": { name: "District 1", color: "#e43e4d", control: 100, stronghold: 0 },
-      "2": { name: "District 2", color: "#ffbf3e", control: 100, stronghold: 0 },
-      "3": { name: "District 3", color: "#35ce71", control: 100, stronghold: 0 },
-      "4": { name: "District 4", color: "#526dff", control: 100, stronghold: 0 },
+      "1": { name: "District 1", color: "#e43e4d", enemy: 1, player: 0, fund: 0, fundTarget: STRONGHOLD_FUND_TARGET },
+      "2": { name: "District 2", color: "#ffbf3e", enemy: 1, player: 0, fund: 0, fundTarget: STRONGHOLD_FUND_TARGET },
+      "3": { name: "District 3", color: "#35ce71", enemy: 1, player: 0, fund: 0, fundTarget: STRONGHOLD_FUND_TARGET },
+      "4": { name: "District 4", color: "#526dff", enemy: 1, player: 0, fund: 0, fundTarget: STRONGHOLD_FUND_TARGET },
       center: { name: "Central District", color: "#bd52ff", boss: "CowCorp CEO" }
+    };
+    const capitalState = {
+      bossAlive: 1,
+      unlocked: 0,
+      control: 1000,
+      phase: 0,
+      enemyTroopsDefeated: 0,
+      strongholdsDestroyed: 0,
+      strongholdsBuilt: 0,
+      chairFund: 0,
+      chairFundTarget: CHAIR_FUND_TARGET,
+      chairReady: 0,
+      finalFightActive: 0,
+      finalFightComplete: 0,
+      finalFightHits: 0
     };
 
     const card = document.getElementById("district-card");
     const regions = [...document.querySelectorAll(".district")];
+    const capitalScreen = document.querySelector(".capital-screen");
+    const siegeEffects = document.getElementById("siege-effects");
+    const districtImpactZones = [
+      { minX: 17, maxX: 39, minY: 16, maxY: 37 },
+      { minX: 61, maxX: 83, minY: 16, maxY: 37 },
+      { minX: 17, maxX: 39, minY: 63, maxY: 84 },
+      { minX: 61, maxX: 83, minY: 63, maxY: 84 }
+    ];
     let pinnedDistrict = null;
+    let siegeTimer = null;
+    let capitalAuthorized = false;
+
+    function launchSiegeExplosion() {
+      if (!siegeEffects || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+      const zone = districtImpactZones[
+        Math.floor(Math.random() * districtImpactZones.length)
+      ];
+      const x = zone.minX + Math.random() * (zone.maxX - zone.minX);
+      const y = zone.minY + Math.random() * (zone.maxY - zone.minY);
+      const explosion = document.createElement("div");
+      explosion.className = "siege-explosion";
+      explosion.style.setProperty("--x", `${x}%`);
+      explosion.style.setProperty("--y", `${y}%`);
+      explosion.style.setProperty("--scale", (0.34 + Math.random() * 0.34).toFixed(2));
+      explosion.style.setProperty(
+        "--blast-color",
+        Math.random() > .72 ? "#ff2638" : Math.random() > .45 ? "#ff8b1e" : "#ff4d17"
+      );
+      explosion.innerHTML = `
+        <i class="blast-smoke"></i>
+        <i class="blast-ring"></i>
+        <i class="blast-core"></i>
+      `;
+
+      const sparkCount = 6 + Math.floor(Math.random() * 5);
+      for (let index = 0; index < sparkCount; index += 1) {
+        const spark = document.createElement("i");
+        spark.className = "blast-spark";
+        spark.style.setProperty("--angle", `${Math.round(Math.random() * 360)}deg`);
+        spark.style.setProperty("--distance", `${20 + Math.round(Math.random() * 34)}px`);
+        spark.style.setProperty("--length", `${7 + Math.round(Math.random() * 11)}px`);
+        spark.style.setProperty("--delay", `${(Math.random() * .12).toFixed(2)}s`);
+        explosion.appendChild(spark);
+      }
+
+      siegeEffects.appendChild(explosion);
+      capitalScreen.style.setProperty("--flash-x", `${x}%`);
+      capitalScreen.style.setProperty("--flash-y", `${y}%`);
+      capitalScreen.classList.remove("siege-flash");
+      void capitalScreen.offsetWidth;
+      capitalScreen.classList.add("siege-flash");
+
+      setTimeout(() => explosion.remove(), 2400);
+    }
+
+    function scheduleSiegeExplosion(delay = 2800) {
+      clearTimeout(siegeTimer);
+      siegeTimer = setTimeout(() => {
+        launchSiegeExplosion();
+        scheduleSiegeExplosion(2400 + Math.random() * 2800);
+      }, delay);
+    }
+
+    function formatCompactNumber(value) {
+      const amount = Math.max(0, Number(value) || 0);
+      if (amount >= 1000000000) return `${(amount / 1000000000).toFixed(amount % 1000000000 ? 1 : 0)}B`;
+      if (amount >= 1000000) return `${(amount / 1000000).toFixed(amount % 1000000 ? 1 : 0)}M`;
+      if (amount >= 1000) return `${(amount / 1000).toFixed(amount % 1000 ? 1 : 0)}K`;
+      return String(Math.floor(amount));
+    }
+
+    function normalizeEnabled(value) {
+      return value === true || Number(value) === 1 || String(value).toLowerCase() === "true";
+    }
+
+    function clamp(value, minimum, maximum, fallback = minimum) {
+      const number = Number(value);
+      return Number.isFinite(number)
+        ? Math.min(maximum, Math.max(minimum, number))
+        : fallback;
+    }
+
+    function renderCenterObjective() {
+      if (!capitalState.bossAlive || capitalState.finalFightComplete) {
+        return "CAPITAL LIBERATED // THE CHAIR GOVERNS";
+      }
+      if (capitalState.finalFightActive) {
+        return `FINAL FIGHT UNDERWAY // ${capitalState.finalFightHits}/10 HITS`;
+      }
+      if (capitalState.phase <= 1 || capitalState.control > 0) {
+        return `CAPITAL ASSAULT // ${capitalState.control}% CONTROL // ${formatCompactNumber(capitalState.enemyTroopsDefeated)} TROOPS DEFEATED`;
+      }
+      if (capitalState.phase >= 4 || capitalState.chairReady) {
+        return "THE CHAIR IS READY // USE !FINALFIGHT";
+      }
+      if (capitalState.strongholdsDestroyed < 4) {
+        return `DESTROY COWCORP STRONGHOLDS // ${capitalState.strongholdsDestroyed}/4`;
+      }
+      if (capitalState.strongholdsBuilt < 4) {
+        return `REBUILD THE STRONGHOLDS // ${capitalState.strongholdsBuilt}/4 // USE !FUNDSTRONGHOLD`;
+      }
+      return `FUND THE CHAIR // ${formatCompactNumber(capitalState.chairFund)}/${formatCompactNumber(capitalState.chairFundTarget)} // USE !FUNDCHAIR`;
+    }
 
     function renderDistrictCard(id) {
       const district = districts[id];
@@ -447,28 +706,84 @@
           <div>
             <div class="card-kicker">Central District // Boss</div>
             <div class="card-name">${district.boss}</div>
-            <div class="ceo-warning">TAKE CONTROL OFF DISTRICTS TO CHALLENGE THE COWCORP CEO</div>
+            <div class="ceo-warning">${renderCenterObjective()}</div>
           </div>
           <div class="ceo-portrait"><img src="boss-cowcorp-ceo-v4.png" alt="CowCorp CEO" /></div>
         `;
         return;
       }
+
+      const status = district.enemy
+        ? { label: "CowCorp Stronghold", value: "1/1", color: "#ff4054" }
+        : district.player
+          ? { label: "Rebuilt Stronghold", value: "1/1", color: "#54ed8c" }
+          : { label: "Destroyed Stronghold", value: "0/1", color: "#aab5c0" };
+      const fundLine = !district.enemy && !district.player
+        ? `
+          <div class="stat">
+            <div class="stat-label">Rebuild Fund</div>
+            <div class="stat-value">${formatCompactNumber(district.fund)}/${formatCompactNumber(district.fundTarget)}</div>
+          </div>
+        `
+        : "";
+
       card.className = "district-card visible";
       card.innerHTML = `
         <div class="card-kicker">CowCorp Capital</div>
         <div class="card-name">${district.name}</div>
         <div class="stats-grid">
           <div class="stat">
-            <div class="stat-label">Enemy Control</div>
-            <div class="stat-value">${district.control}%</div>
+            <div class="stat-label">Capital Control</div>
+            <div class="stat-value">${capitalState.control}%</div>
           </div>
           <div class="stat">
-            <div class="stat-label">Stronghold</div>
-            <div class="stat-value">${district.stronghold}/1</div>
+            <div class="stat-label">${status.label}</div>
+            <div class="stat-value" style="color:${status.color}">${status.value}</div>
           </div>
+          ${fundLine}
         </div>
-        <div class="control-track"><div class="control-fill" style="width:${district.control}%"></div></div>
+        <div class="control-track"><div class="control-fill" style="width:${capitalState.control / 10}%"></div></div>
       `;
+    }
+
+    function applyCapitalSnapshot(site) {
+      const sector10 = site?.sectors?.["10"];
+      if (!sector10) return;
+      capitalState.bossAlive = normalizeEnabled(sector10.bossAlive) ? 1 : 0;
+      capitalState.unlocked = normalizeEnabled(sector10.capitalUnlocked) ? 1 : 0;
+      capitalState.control = clamp(
+        sector10.displayedControl ?? sector10.control ?? sector10.enemyControl,
+        0,
+        1000,
+        capitalState.control
+      );
+      capitalState.phase = Math.max(0, Number(sector10.capitalPhase) || 0);
+      capitalState.enemyTroopsDefeated = Math.max(
+        0,
+        Number(sector10.enemyTroopsDefeated) || 0
+      );
+      capitalState.strongholdsDestroyed = Math.max(0, Number(sector10.strongholdsDestroyed) || 0);
+      capitalState.strongholdsBuilt = Math.max(0, Number(sector10.strongholdsBuilt) || 0);
+      capitalState.chairFund = Math.max(0, Number(sector10.chairFund) || 0);
+      capitalState.chairFundTarget = Math.max(1, Number(sector10.chairFundTarget) || CHAIR_FUND_TARGET);
+      capitalState.chairReady = normalizeEnabled(sector10.chairReady) ? 1 : 0;
+      capitalState.finalFightActive = normalizeEnabled(sector10.finalFightActive) ? 1 : 0;
+      capitalState.finalFightComplete = normalizeEnabled(sector10.finalFightComplete) ? 1 : 0;
+      capitalState.finalFightHits = Math.max(0, Number(sector10.finalFightHits) || 0);
+
+      if (Array.isArray(sector10.capitalStrongholds)) {
+        sector10.capitalStrongholds.forEach((stronghold, index) => {
+          const districtNumber = Math.max(1, Number(stronghold?.district) || index + 1);
+          const district = districts[String(districtNumber)];
+          if (!district) return;
+          district.enemy = normalizeEnabled(stronghold?.enemy) ? 1 : 0;
+          district.player = normalizeEnabled(stronghold?.player) ? 1 : 0;
+          district.fund = Math.max(0, Number(stronghold?.fund) || 0);
+          district.fundTarget = Math.max(1, Number(stronghold?.fundTarget) || STRONGHOLD_FUND_TARGET);
+        });
+      }
+
+      if (pinnedDistrict) renderDistrictCard(pinnedDistrict);
     }
 
     function selectDistrict(element, pin = false) {
@@ -507,7 +822,38 @@
       setTimeout(() => { window.location.href = "index.html"; }, 920);
     }
 
+    async function fetchCapitalState() {
+      try {
+        const response = await fetch(
+          `${FIREBASE_DB_URL}/users/__site.json?refresh=${Date.now()}`,
+          { cache: "no-store" }
+        );
+        if (!response.ok) throw new Error(`Capital sync returned ${response.status}`);
+        const site = await response.json();
+        const sector8Defeated = Number(site?.sectors?.["8"]?.bossAlive) === 0;
+        const sector9Defeated = Number(site?.sectors?.["9"]?.bossAlive) === 0;
+        const capitalUnlocked = normalizeEnabled(site?.sectors?.["10"]?.capitalUnlocked);
+        if (!sector8Defeated || !sector9Defeated || !capitalUnlocked) {
+          leaveCapital();
+          return;
+        }
+
+        applyCapitalSnapshot(site);
+        if (!capitalAuthorized) {
+          capitalAuthorized = true;
+          capitalScreen.classList.add("is-authorized");
+          setTimeout(launchSiegeExplosion, 1350);
+          scheduleSiegeExplosion(4200);
+        }
+      } catch (error) {
+        console.warn("Capital live sync unavailable:", error);
+        if (!capitalAuthorized) leaveCapital();
+      }
+    }
+
     document.getElementById("return-map").addEventListener("click", leaveCapital);
+    fetchCapitalState();
+    setInterval(fetchCapitalState, 3000);
   </script>
 </body>
 </html>
