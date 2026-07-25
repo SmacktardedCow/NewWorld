@@ -4848,7 +4848,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       const meta = getSectorDisplayMeta(state);
       const objective = getSector4ObjectiveMeta(state);
       const commandInfo = getSectorPanelCommands(region);
-      const jungleBossAlive = Number(sectorStates[3]?.bossAlive) === 1;
+      const oceanBossAlive = Number(sectorStates[2]?.bossAlive) !== 0;
       return `
         <article class="sector-card sector-card--north">
           <div class="sector-card-main">
@@ -4879,8 +4879,8 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
             </div>
           </div>
           <div class="sector-card-body">
-            <p class="sector-card-description">${jungleBossAlive
-              ? "S4 is protected by a High Intensity Milker Shield Array. An assault isn't possible until it is taken down."
+            <p class="sector-card-description">${oceanBossAlive
+              ? "S4 is protected by a High Intensity Milker Shield Array. Defeat the Sector 2 boss to bring it down."
               : "MechaCow's Fabricators maintain Sector 4's mechanized defenses. Forge the equipment needed to attack the North Pole."}</p>
             ${commandInfo.commands.length ? `
               <div class="sector-card-command-label">Commands</div>
@@ -5585,19 +5585,11 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       }
 
       if (sectorNumber === 4) {
-        if (!isSectorLiberated(2)) {
+        if (Number(sectorStates[2]?.bossAlive) !== 0) {
           return {
             commands: [],
             governorCommands: [],
-            notice: "Liberate Sector 2 to access"
-          };
-        }
-
-        if (Number(sectorStates[3]?.bossAlive) === 1) {
-          return {
-            commands: [],
-            governorCommands: [],
-            notice: "S4 is protected by a High Intensity Milker Shield Array. An assault isn't possible until the Jungle boss is defeated."
+            notice: "Defeat the Sector 2 boss to access"
           };
         }
 
