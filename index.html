@@ -6225,7 +6225,8 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       document.getElementById("pc-level").textContent = stats.level ?? "-";
       document.getElementById("pc-milkers").textContent = stats.milkers ?? 0;
       document.getElementById("pc-troops").textContent = stats.troops ?? 0;
-      document.getElementById("pc-boat").textContent = "Dinghy";
+      document.getElementById("pc-boat").textContent =
+        stats.ship || stats.boat || "Dingy";
       document.getElementById("pc-ai-active").textContent = formatPlayerCardFlag(stats.aiActive ?? stats.ai);
       const milkCrystals = document.getElementById("pc-milk-crystals");
       const rawMilkCrystalCount = Number(stats.milkCrystals);
@@ -8436,7 +8437,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
         <div class="pc-panel active" data-pc-panel="stats">
           <div class="pc-stats">
             <div class="pc-stat-line">Level <b id="pc-level">-</b></div><div class="pc-stat-line">Milkers <b id="pc-milkers">-</b></div>
-            <div class="pc-stat-line">Troops <b id="pc-troops">-</b></div><div class="pc-stat-line">Boat <b id="pc-boat">Dinghy</b></div>
+            <div class="pc-stat-line">Troops <b id="pc-troops">-</b></div><div class="pc-stat-line">Boat <b id="pc-boat">Dingy</b></div>
             <div class="pc-stat-line">AI Active <b id="pc-ai-active">-</b></div><div class="pc-stat-line pc-milk-crystals">Milk Crystals <b id="pc-milk-crystals">-</b></div>
           </div>
           <div class="pc-special-row"><div class="pc-special-icon" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M8 39l31-17 7 4-31 18zM36 24l3-9 6 1 1 10M20 38l-2 12M25 35l7 8M12 43l-4 8M42 20l8-5 5 2-9 8"/></svg></div><div class="pc-special-copy"><strong>UNIQUE WEAPON:</strong><span id="pc-unique-weapon">-</span></div></div>
