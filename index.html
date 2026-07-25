@@ -4518,6 +4518,15 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       return isSectorLiberated(sectorNumber) && liberatedControl >= 100;
     }
 
+    function isSector3BossDefeated() {
+      const sector3State = sectorStates[3];
+      return Boolean(
+        sector3State &&
+        sector3State.loaded !== false &&
+        Number(sector3State.bossAlive) === 0
+      );
+    }
+
     function renderSectorAccessWarning(sectorNumber) {
       let message = "";
       let corrupted = false;
@@ -4545,7 +4554,15 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
         } else if (getSectorDisplayMeta(sectorStates[2]).fullEnemyControl) {
           message = "BlackHoof has full control of the Ocean<br>Use !raid Sector 2 or !raid Ocean";
         }
-      } else if ([3, 4].includes(sectorNumber)) {
+      } else if (sectorNumber === 4) {
+        if (!isSector3BossDefeated()) {
+          message = "Defeat the Sector 3 boss to access";
+        } else if (bossCanBeChallenged) {
+          message = "BOSS IS WEAK — USE !challenge S4 TO TRY SEIZE POWER!";
+        } else if (meta?.fullEnemyControl) {
+          message = "Use !raid Sector 4 or !raid North Pole";
+        }
+      } else if (sectorNumber === 3) {
         if (!isSectorLiberated(2)) {
           message = "Liberate Sector 2 to access";
         } else if (sector3BossLocated) {
@@ -4553,10 +4570,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
         } else if (bossCanBeChallenged) {
           message = `BOSS IS WEAK — USE !challenge S${sectorNumber} TO TRY SEIZE POWER!`;
         } else if (meta?.fullEnemyControl) {
-          const raidNames = {
-            3: "Jungle",
-            4: "North Pole"
-          };
+          const raidNames = { 3: "Jungle" };
           message = `Use !raid Sector ${sectorNumber} or !raid ${raidNames[sectorNumber]}`;
         }
       } else if (sectorNumber === 6) {
@@ -4848,7 +4862,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       const meta = getSectorDisplayMeta(state);
       const objective = getSector4ObjectiveMeta(state);
       const commandInfo = getSectorPanelCommands(region);
-      const jungleBossAlive = Number(sectorStates[3]?.bossAlive) !== 0;
+      const jungleBossAlive = !isSector3BossDefeated();
       return `
         <article class="sector-card sector-card--north">
           <div class="sector-card-main">
@@ -5585,7 +5599,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       }
 
       if (sectorNumber === 4) {
-        if (Number(sectorStates[3]?.bossAlive) !== 0) {
+        if (!isSector3BossDefeated()) {
           return {
             commands: [],
             governorCommands: [],
@@ -5711,13 +5725,12 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
         };
       }
 
-      if ([3, 4].includes(sectorNumber)) {
+      if (sectorNumber === 3) {
         if (!isSectorLiberated(2)) {
           return { commands: [], notice: "Liberate Sector 2 to access" };
         }
         const raidNames = {
           3: "Jungle",
-          4: "North Pole",
           6: "Swamplands",
           7: "Red Basin"
         };
