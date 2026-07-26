@@ -2447,6 +2447,47 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       opacity: 0.48;
     }
 
+    .command-hover-target,
+    .sector-tooltip-command,
+    .sector-command-detail-command,
+    .command-row-ref,
+    .universal-command-toggle {
+      cursor: help;
+    }
+
+    .command-hover-tooltip {
+      position: fixed;
+      z-index: 100000;
+      width: max-content;
+      max-width: min(300px, calc(100vw - 24px));
+      border: 1px solid rgba(178, 137, 255, 0.72);
+      border-radius: 6px;
+      padding: 8px 10px;
+      background: rgba(10, 6, 22, 0.97);
+      color: #f4edff;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.4;
+      letter-spacing: 0.01em;
+      box-shadow:
+        0 8px 30px rgba(0, 0, 0, 0.58),
+        0 0 15px rgba(148, 82, 255, 0.24);
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(4px);
+      transition:
+        opacity 120ms ease,
+        transform 120ms ease,
+        visibility 120ms ease;
+    }
+
+    .command-hover-tooltip.is-visible {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
     .sector-vulnerable {
       margin-top: 8px;
       border: 1px solid rgba(255, 52, 68, 0.88);
@@ -3592,6 +3633,107 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
         description: "Check your current Milker balance."
       }
     ];
+
+    const sectorCommandDescriptions = Object.freeze({
+      "!ambush": "Join an ambush against threats moving through Sector 1.",
+      "!race": "Enter Sector 1's dangerous desert race for rewards.",
+      "!rigs": "Attack and disable one of Immortal Bo's Milker Rigs.",
+      "!witness me": "Commit to a reckless Sector 1 assault for a chance at glory and rewards.",
+      "!finishhim": "Strike the weakened Sector 1 boss and attempt to finish the fight.",
+      "!flagship": "Deploy or use your flagship in Sector 2's ocean campaign.",
+      "!plunder": "Plunder the Ocean for Milkers and valuable supplies.",
+      "!treasurehunt": "Search Sector 2 for hidden ocean treasure.",
+      "!harpoon": "Go harpoon fishing for Milkers, rare catches, and ocean rewards.",
+      "!releasethekraken": "Governor command that releases the Kraken into Sector 2.",
+      "!fishingtax": "Governor command that switches Sector 2's fishing tax on or off.",
+      "!explore s3": "Explore the Jungle for intel, loot, and progress against Colonel Bullseye.",
+      "!uav": "Launch a UAV operation to gather Sector 3 battlefield intel.",
+      "!protect": "Protect the Jungle operation and its participating citizens.",
+      "!fundmuke": "Contribute Milkers to the Sector 3 MIICBM funding goal.",
+      "!snipe": "Governor command that calls a precision sniper attack from Sector 3.",
+      "!hitsquad": "Governor command that activates Sector 3's roaming Hitsquad.",
+      "!forge emp": "Forge the EMP equipment needed during Sector 4's enemy campaign.",
+      "!forge ai": "Forge AI equipment after Sector 4 has been liberated.",
+      "!attack s4": "Launch the troop-supported hacking assault against Sector 4.",
+      "!upload / !download": "Upload or download data during Sector 4's cyber operations.",
+      "!synths": "Governor command that activates Sector 4's Synth forces.",
+      "!reconfigure": "Governor command that reconfigures Sector 4's liberated AI systems.",
+      "!commune": "Commune with the Shroud inside liberated Sector 5.",
+      "!shroudtouched": "Governor command that marks a citizen as Shroudtouched.",
+      "!formless": "Governor command that invokes Sector 5's unstable Formless effect.",
+      "!burn": "Burn back Sector 6's corruption and damage enemy control.",
+      "!scorch": "Search for and scorch hidden Plagueroot Generators.",
+      "!napalm": "Call a napalm strike against Sector 6's corrupted forces.",
+      "!consume": "Consume Plagueroot energy for Sector 6 rewards and effects.",
+      "!hunt s6": "Hunt the corrupted creatures roaming Sector 6.",
+      "!fundnapalm": "Fund the final napalm operation once Sector 6's generators are destroyed.",
+      "!root": "Interact with the remaining Plagueroot in liberated Sector 6.",
+      "!plaugeroot": "Governor command that activates Sector 6's Plagueroot effect.",
+      "!infect": "Governor command that spreads Sector 6's infection to a target.",
+      "!convert": "Convert followers and strengthen the active Sector 7 cause.",
+      "!pilgrimage": "Begin a pilgrimage through Sector 7 for progression and rewards.",
+      "!sacrifice": "Sacrifice your own resources to advance Sector 7's campaign.",
+      "!divinelight": "Call Divine Light upon Sector 7's citizens or enemies.",
+      "!summon": "Summon a powerful entity to fight for Sector 7.",
+      "!catch": "Attempt to catch a creature released within Sector 7.",
+      "!hex": "Governor command that places a Sector 7 hex on a target.",
+      "!hellblast": "Governor command that unleashes a devastating Hellblast.",
+      "!smite": "Governor command that smites an enemy of Sector 7.",
+      "!hog": "Join the Hog assault and help overwhelm the Hog Plains.",
+      "!hograce": "Enter the liberated Hog Plains race for rewards.",
+      "!releasethehogs": "Governor command that releases the Hogs across the New World.",
+      "!raid s10": "Launch an assault against CowCorp's Capital.",
+      "!artilery": "Call a Capital artillery strike against CowCorp positions.",
+      "!airsupport": "Call air support for the active Capital operation.",
+      "!superweapon": "Deploy a funded superweapon against the Capital.",
+      "!heldive": "Join a high-risk Helldive into CowCorp territory.",
+      "!espionage": "Run an espionage mission to weaken the Capital campaign.",
+      "!import / !export": "Move explosives and supplies through the Capital's black market.",
+      "!stronghold": "Attack, fund, or rebuild one of the Capital's four Strongholds.",
+      "!safehouse": "Use the sector's protected safehouse.",
+      "!deputise": "Governor command that appoints a citizen as the sector deputy."
+    });
+
+    function normalizeCommandForDescription(command) {
+      return String(command || "")
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, " ");
+    }
+
+    function getCommandDescription(command, sectorNumber = 0) {
+      const normalized = normalizeCommandForDescription(command);
+
+      const challengeMatch = normalized.match(/^!challenge(?:\s+s?(\d+))?$/);
+      if (challengeMatch) {
+        const challengeSector = sectorNumber || Number(challengeMatch[1]) || 0;
+        return challengeSector
+          ? `Challenge the current ruler of Sector ${challengeSector} and attempt to seize control.`
+          : "Challenge a sector's current ruler and attempt to seize control.";
+      }
+
+      if (/^!raid(?:\s|$)/.test(normalized)) {
+        return "Launch an assault on the named sector to weaken or overthrow its ruler.";
+      }
+
+      if (sectorCommandDescriptions[normalized]) {
+        return sectorCommandDescriptions[normalized];
+      }
+
+      const universalMatch = universalCommands.find(
+        (item) => normalizeCommandForDescription(item.command) === normalized
+      );
+      if (universalMatch) return universalMatch.description;
+
+      for (const group of commandGroups) {
+        const match = group.commands.find(
+          (item) => normalizeCommandForDescription(item.name) === normalized
+        );
+        if (match) return match.use;
+      }
+
+      return `Use ${String(command || "this command").trim()} in Twitch chat.`;
+    }
 
     const sector1State = sectorStates[1];
     const sector2State = sectorStates[2];
@@ -5124,7 +5266,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       };
       const commandInfo = getSectorPanelCommands(region);
       const commands = region.number === 1
-        ? ["!ambush", "!race"]
+        ? ["!ambush", "!race", "!challenge S1"]
         : [...(commandInfo.commands || [])];
       const governorCommands = region.number === 1
         ? []
@@ -5467,12 +5609,21 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       const fightCommand = getBossFightCommand(sectorNumber);
       const isBossFight = Boolean(fightCommand) &&
         String(command).toLowerCase() === fightCommand.toLowerCase();
-      const classes = [baseClass];
+      const classes = [baseClass, "command-hover-target"];
+      const description = getCommandDescription(command, sectorNumber);
 
       if (isBossFight) classes.push("is-finisher");
       if (isBossFight && !isBossFightReady(sectorNumber)) classes.push("is-locked");
 
-      return `<span class="${classes.join(" ")}">${escapeHtml(command)}</span>`;
+      return `
+        <span
+          class="${classes.join(" ")}"
+          data-command-description="${escapeHtml(description)}"
+          data-command-sector="${sectorNumber}"
+          tabindex="0"
+          aria-label="${escapeHtml(`${command}: ${description}`)}"
+        >${escapeHtml(command)}</span>
+      `;
     }
 
     function getSector2CommandInfo() {
@@ -5497,7 +5648,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
 
       if (!meta.isEnemy) {
         return {
-          commands: ["!TreasureHunt", "!harpoon"],
+          commands: ["!TreasureHunt", "!harpoon", "!challenge S2"],
           governorCommands: ["!ReleaseTheKraken", "!FishingTax", "!Plunder", "!safehouse", "!Deputise"],
           notice: ""
         };
@@ -5538,7 +5689,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
 
       if (sectorNumber === 1) {
         if (!meta.isEnemy) {
-          return { commands: ["!ambush", "!race"], notice: "" };
+          return { commands: ["!ambush", "!race", "!challenge S1"], notice: "" };
         }
         const commands = [...state.commands];
         if (meta.control === 0) commands.push("!finishhim");
@@ -5556,7 +5707,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
 
         if (!meta.isEnemy) {
           return {
-            commands: ["!explore S3"],
+            commands: ["!explore S3", "!challenge S3"],
             governorCommands: ["!snipe", "!safehouse", "!hitsquad", "!Deputise"],
             notice: ""
           };
@@ -5609,7 +5760,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
 
         if (!meta.isEnemy) {
           return {
-            commands: ["!forge AI", "!upload / !download"],
+            commands: ["!forge AI", "!upload / !download", "!challenge S4"],
             governorCommands: ["!synths", "!reconfigure", "!safehouse", "!Deputise"],
             notice: ""
           };
@@ -5625,7 +5776,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       if (sectorNumber === 5) {
         if (!meta.isEnemy) {
           return {
-            commands: ["!commune"],
+            commands: ["!commune", "!challenge S5"],
             governorCommands: ["!shroudtouched", "!formless", "!safehouse", "!Deputise"],
             notice: ""
           };
@@ -5647,7 +5798,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       if (sectorNumber === 6) {
         if (!meta.isEnemy) {
           return {
-            commands: ["!hunt s6", "!root", "!consume"],
+            commands: ["!hunt s6", "!root", "!consume", "!challenge S6"],
             governorCommands: ["!plaugeroot", "!Infect", "!safehouse", "!Deputise"],
             notice: ""
           };
@@ -5669,7 +5820,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       if (sectorNumber === 7) {
         if (!meta.isEnemy) {
           return {
-            commands: ["!catch", "!pilgrimage", "!convert"],
+            commands: ["!catch", "!pilgrimage", "!convert", "!challenge S7"],
             governorCommands: [
               "!hex",
               "!divinelight",
@@ -5699,7 +5850,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       if (sectorNumber === 8 || sectorNumber === 9) {
         if (!meta.isEnemy) {
           return {
-            commands: ["!hograce", "!hog"],
+            commands: ["!hograce", "!hog", `!challenge S${sectorNumber}`],
             governorCommands: ["!releasethehogs", "!safehouse", "!Deputise"],
             notice: ""
           };
@@ -5719,7 +5870,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
 
       if (!meta.isEnemy) {
         return {
-          commands: [],
+          commands: [`!challenge S${sectorNumber}`],
           governorCommands: ["!safehouse", "!Deputise"],
           notice: ""
         };
@@ -5928,6 +6079,7 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
                         class="universal-command-toggle"
                         type="button"
                         data-universal-command="${escapeHtml(item.command)}"
+                        data-command-description="${escapeHtml(item.description)}"
                         aria-expanded="${expanded ? "true" : "false"}"
                       >
                         <span>${escapeHtml(item.command)}</span>
@@ -6275,6 +6427,111 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
       `).join("");
     }
 
+    let commandHoverTooltip = null;
+    let activeCommandHoverTarget = null;
+
+    function getCommandHoverTarget(node) {
+      return node?.closest?.(
+        "[data-command-description], .sector-tooltip-command, .sector-command-detail-command"
+      ) || null;
+    }
+
+    function getCommandHoverDescription(target) {
+      if (!target) return "";
+      if (target.dataset.commandDescription) {
+        return target.dataset.commandDescription;
+      }
+
+      const command = target.dataset.universalCommand ||
+        target.textContent.trim();
+      const sectorNumber = Number(target.dataset.commandSector) || 0;
+      return getCommandDescription(command, sectorNumber);
+    }
+
+    function ensureCommandHoverTooltip() {
+      if (commandHoverTooltip) return commandHoverTooltip;
+
+      commandHoverTooltip = document.createElement("div");
+      commandHoverTooltip.className = "command-hover-tooltip";
+      commandHoverTooltip.setAttribute("role", "tooltip");
+      commandHoverTooltip.setAttribute("aria-hidden", "true");
+      document.body.appendChild(commandHoverTooltip);
+      return commandHoverTooltip;
+    }
+
+    function positionCommandHoverTooltip(clientX, clientY) {
+      const tooltip = ensureCommandHoverTooltip();
+      const margin = 10;
+      const gap = 14;
+      const rect = tooltip.getBoundingClientRect();
+      let left = clientX + gap;
+      let top = clientY - rect.height - gap;
+
+      if (left + rect.width > window.innerWidth - margin) {
+        left = window.innerWidth - rect.width - margin;
+      }
+      if (left < margin) left = margin;
+      if (top < margin) top = clientY + gap;
+      if (top + rect.height > window.innerHeight - margin) {
+        top = window.innerHeight - rect.height - margin;
+      }
+
+      tooltip.style.left = `${Math.round(left)}px`;
+      tooltip.style.top = `${Math.round(top)}px`;
+    }
+
+    function showCommandHoverTooltip(target, clientX, clientY) {
+      const description = getCommandHoverDescription(target);
+      if (!description) return;
+
+      activeCommandHoverTarget = target;
+      const tooltip = ensureCommandHoverTooltip();
+      tooltip.textContent = description;
+      tooltip.classList.add("is-visible");
+      tooltip.setAttribute("aria-hidden", "false");
+      positionCommandHoverTooltip(clientX, clientY);
+    }
+
+    function hideCommandHoverTooltip() {
+      activeCommandHoverTarget = null;
+      if (!commandHoverTooltip) return;
+      commandHoverTooltip.classList.remove("is-visible");
+      commandHoverTooltip.setAttribute("aria-hidden", "true");
+    }
+
+    document.addEventListener("pointerover", (event) => {
+      const target = getCommandHoverTarget(event.target);
+      if (!target || target === activeCommandHoverTarget) return;
+      showCommandHoverTooltip(target, event.clientX, event.clientY);
+    });
+
+    document.addEventListener("pointermove", (event) => {
+      if (!activeCommandHoverTarget) return;
+      positionCommandHoverTooltip(event.clientX, event.clientY);
+    });
+
+    document.addEventListener("pointerout", (event) => {
+      if (!activeCommandHoverTarget) return;
+      if (activeCommandHoverTarget.contains(event.relatedTarget)) return;
+      hideCommandHoverTooltip();
+    });
+
+    document.addEventListener("focusin", (event) => {
+      const target = getCommandHoverTarget(event.target);
+      if (!target) return;
+      const rect = target.getBoundingClientRect();
+      showCommandHoverTooltip(
+        target,
+        rect.left + rect.width / 2,
+        rect.top
+      );
+    });
+
+    document.addEventListener("focusout", (event) => {
+      if (activeCommandHoverTarget?.contains(event.relatedTarget)) return;
+      hideCommandHoverTooltip();
+    });
+
     function renderCommands() {
       document.getElementById("cmd-list").innerHTML = commandGroups.map((group) => `
         <article class="lore-block command-card" style="--group-color:${escapeHtml(group.color)}">
@@ -6282,7 +6539,12 @@ window.NEW_WORLD_SECTOR_DEFINITIONS=[{"id":"capital","number":10,"name":"The Cap
           ${group.note ? `<div class="lore-text" style="margin-bottom:${group.commands.length ? "8px" : "0"}">${escapeHtml(group.note)}</div>` : ""}
           ${group.bullets ? `<ul class="command-note-list">${group.bullets.map((bullet) => `<li>${escapeHtml(bullet)}</li>`).join("")}</ul>` : ""}
           ${group.commands.length ? `<div class="command-list">${group.commands.map((command) => `
-            <div class="command-row-ref">
+            <div
+              class="command-row-ref"
+              data-command-description="${escapeHtml(command.use)}"
+              tabindex="0"
+              aria-label="${escapeHtml(`${command.name}: ${command.use}`)}"
+            >
               <div class="command-main">
                 <span class="cmd-name">${escapeHtml(command.name)}</span>
                 <span class="command-cooldown">Cooldown: ${escapeHtml(command.cooldown || "-")}</span>
